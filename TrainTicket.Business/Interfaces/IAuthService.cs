@@ -7,5 +7,8 @@ namespace TrainTicket.Business.Interfaces
     {
         // Tr? v? thông tin phiên ??ng nh?p n?u h?p l?; ng??c l?i tr? null.
         Task<UserSessionDto?> LoginAsync(LoginRequestDto request);
+
+        // ??ng k? t?i kho?n m?i.
+        Task<bool> RegisterAsync(RegisterRequestDto request);
     }
 }

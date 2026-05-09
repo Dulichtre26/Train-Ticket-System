@@ -14,6 +14,7 @@ namespace TrainTicket.WinForms.Forms
         private readonly Guna2TextBox _txtPassword = new();
         private readonly Guna2ComboBox _cboRegion = new();
         private readonly Guna2Button _btnLogin = new();
+        private readonly Guna2Button _btnRegister = new();
         private readonly Label _lblStatus = new();
         private readonly System.Windows.Forms.Timer _fadeTimer = new();
 
@@ -115,8 +116,18 @@ namespace TrainTicket.WinForms.Forms
             _cboRegion.Items.AddRange(new object[] { "Tr? s? chính (T?ng)", "Site Mi?n B?c", "Site Mi?n Trung", "Site Mi?n Nam" });
             _cboRegion.SelectedIndex = 0;
 
+            _btnRegister.Text = "??ng k?";
+            _btnRegister.Left = 28;
+            _btnRegister.Top = 280;
+            _btnRegister.Width = 138;
+            _btnRegister.Height = 38;
+            _btnRegister.BorderRadius = 10;
+            _btnRegister.FillColor = Color.FromArgb(34, 197, 94);
+            _btnRegister.HoverState.FillColor = Color.FromArgb(22, 163, 74);
+            _btnRegister.Click += BtnRegister_Click;
+
             _btnLogin.Text = "??ng nh?p";
-            _btnLogin.Left = 250;
+            _btnLogin.Left = 180;
             _btnLogin.Top = 280;
             _btnLogin.Width = 138;
             _btnLogin.Height = 38;
@@ -141,6 +152,7 @@ namespace TrainTicket.WinForms.Forms
             card.Controls.Add(_txtPassword);
             card.Controls.Add(lblRegion);
             card.Controls.Add(_cboRegion);
+            card.Controls.Add(_btnRegister);
             card.Controls.Add(_btnLogin);
             card.Controls.Add(_lblStatus);
 
@@ -226,6 +238,12 @@ namespace TrainTicket.WinForms.Forms
             {
                 _btnLogin.Enabled = true;
             }
+        }
+
+        private void BtnRegister_Click(object? sender, EventArgs e)
+        {
+            var registerForm = Program.ServiceProvider.GetRequiredService<frmRegister>();
+            registerForm.ShowDialog(this);
         }
     }
 }

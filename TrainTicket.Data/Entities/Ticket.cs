@@ -32,12 +32,27 @@ namespace TrainTicket.Data.Entities
         public decimal OriginalPrice { get; set; }
 
         [Column(TypeName = "decimal(12,0)")]
+        public decimal DiscountAmount { get; set; } = 0;
+
+        [Column(TypeName = "decimal(12,0)")]
         public decimal FinalPrice { get; set; }
+
+        [MaxLength(50)]
+        public string? DiscountCode { get; set; }
 
         [MaxLength(20)]
         public string Status { get; set; } = "Pending";
 
+        public bool CheckedIn { get; set; } = false;
+        public DateTime? CheckInAt { get; set; }
         public DateTime BookedAt { get; set; } = DateTime.Now;
+        public DateTime? CancelledAt { get; set; }
+
+        [MaxLength(255)]
+        public string? CancelReason { get; set; }
+
+        public DateTime CreatedAt { get; set; } = DateTime.Now;
+        public DateTime UpdatedAt { get; set; } = DateTime.Now;
 
         [MaxLength(20)]
         public string RegionCode { get; set; } = "HQ";

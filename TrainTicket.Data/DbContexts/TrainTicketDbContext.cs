@@ -33,6 +33,10 @@ namespace TrainTicket.Data.DbContexts
         public DbSet<SchedulePrice> SchedulePrices => Set<SchedulePrice>();
         public DbSet<Ticket> Tickets => Set<Ticket>();
         public DbSet<Payment> Payments => Set<Payment>();
+        public DbSet<Notification> Notifications => Set<Notification>();
+        public DbSet<RefreshToken> RefreshTokens => Set<RefreshToken>();
+        public DbSet<AuditLog> AuditLogs => Set<AuditLog>();
+        public DbSet<Discount> Discounts => Set<Discount>();
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -126,6 +130,35 @@ namespace TrainTicket.Data.DbContexts
                  .WithOne(x => x.Payment)
                  .HasForeignKey<Payment>(x => x.TicketID)
                  .OnDelete(DeleteBehavior.Restrict);
+            });
+
+            // Notification
+            modelBuilder.Entity<Notification>(e => {
+                e.HasOne(x => x.User)
+                 .WithMany()
+                 .HasForeignKey(x => x.UserID)
+                 .OnDelete(DeleteBehavior.Cascade);
+            });
+
+            // RefreshToken
+            modelBuilder.Entity<RefreshToken>(e => {
+                e.HasOne(x => x.User)
+                 .WithMany()
+                 .HasForeignKey(x => x.UserID)
+                 .OnDelete(DeleteBehavior.Cascade);
+            });
+
+            // AuditLog
+            modelBuilder.Entity<AuditLog>(e => {
+                e.HasOne(x => x.User)
+                 .WithMany()
+                 .HasForeignKey(x => x.UserID)
+                 .OnDelete(DeleteBehavior.SetNull);
+            });
+
+            // Discount - no FK, but index on Code
+            modelBuilder.Entity<Discount>(e => {
+                e.HasIndex(x => x.Code).IsUnique();
             });
 
             // GLOBAL QUERY FILTERS - MULTI-TENANT (BY REGION)

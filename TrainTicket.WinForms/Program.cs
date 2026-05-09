@@ -61,9 +61,12 @@ namespace TrainTicket.WinForms
             services.AddScoped<ITicketService, TicketService>();
             services.AddScoped<IReportService, ReportService>();
             services.AddScoped<ICatalogService, CatalogService>();
+            services.AddScoped<IDiscountService, DiscountService>();
+            services.AddScoped<INotificationService, NotificationService>();
 
             // ??ng ký các form chính.
             services.AddScoped<frmLogin>();
+            services.AddScoped<frmRegister>();
             services.AddScoped<frmMain>();
             services.AddScoped<frmSearch>();
             services.AddScoped<frmSeatMap>();

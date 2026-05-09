@@ -3,6 +3,7 @@ using System.Linq;
 using Microsoft.EntityFrameworkCore;
 using TrainTicket.Data.Entities;
 using Route = TrainTicket.Data.Entities.Route;
+using BCrypt.Net;
 
 namespace TrainTicket.Data.DbContexts
 {
@@ -54,8 +55,8 @@ namespace TrainTicket.Data.DbContexts
             context.Roles.AddRange(roleAdmin, roleUser);
             context.SaveChanges();
 
-            var adminUser = new User { Email = "admin@trainticket.vn", PasswordHash = "Admin@123", FullName = "Admin", PhoneNumber = "0123456789", IsActive = true, RegionCode = "HQ" };
-            var customerUser = new User { Email = "kh@trainticket.vn", PasswordHash = "123456", FullName = "Khách Hàng 1", PhoneNumber = "0987654321", IsActive = true, RegionCode = "HQ" };
+            var adminUser = new User { Email = "admin@trainticket.vn", PasswordHash = BCrypt.Net.BCrypt.HashPassword("Admin@123"), FullName = "Admin", PhoneNumber = "0123456789", IsActive = true, RegionCode = "HQ" };
+            var customerUser = new User { Email = "kh@trainticket.vn", PasswordHash = BCrypt.Net.BCrypt.HashPassword("123456"), FullName = "Khách Hàng 1", PhoneNumber = "0987654321", IsActive = true, RegionCode = "HQ" };
             context.Users.AddRange(adminUser, customerUser);
             context.SaveChanges();
 

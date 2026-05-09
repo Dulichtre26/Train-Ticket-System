@@ -333,7 +333,7 @@ namespace TrainTicket.WinForms.Forms
             bool isAdmin   = roles.Contains("Admin");
             bool isStaff   = roles.Contains("Staff");
             bool isManager = roles.Contains("Manager");
-            bool isCustomer= roles.Contains("Customer");
+            bool isCustomer= roles.Contains("User");
 
             _btnSearch.Visible    = isAdmin || isStaff || isCustomer;
             _btnTickets.Visible   = isAdmin || isStaff || isCustomer;

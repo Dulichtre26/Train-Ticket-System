@@ -2,6 +2,7 @@ using Microsoft.EntityFrameworkCore;
 using TrainTicket.Business.DTOs;
 using TrainTicket.Business.Interfaces;
 using TrainTicket.Data.DbContexts;
+using TrainTicket.Data.Entities;
 using System.Globalization;
 
 namespace TrainTicket.Business.Services
@@ -63,7 +64,7 @@ namespace TrainTicket.Business.Services
                 return string.Equals(inputPassword, plainPassword, StringComparison.Ordinal);
             }
 
-            // Ch? verify BCrypt khi hash ?úng format BCrypt ?? tránh l?i Invalid salt version.
+            // Ch? verify BCrypt khi hash ??ng format BCrypt ?? tránh l?i Invalid salt version.
             if (storedHash.StartsWith("$2", StringComparison.Ordinal))
             {
                 try
@@ -78,6 +79,45 @@ namespace TrainTicket.Business.Services
 
             // Fallback cho d? li?u legacy l?u plain text.
             return string.Equals(inputPassword, storedHash, StringComparison.Ordinal);
+        }
+
+        public async Task<bool> RegisterAsync(RegisterRequestDto request)
+        {
+            // 1) Ki?m tra email ?? ??ng k? ch?a.
+            var existingUser = await _context.Users
+                .FirstOrDefaultAsync(x => x.Email == request.Email && !x.IsDeleted);
+
+            if (existingUser != null)
+            {
+                return false; // Email ?? t?n t?i
+            }
+
+            // 2) Hash m?t kh?u b?ng BCrypt
+            var passwordHash = BCrypt.Net.BCrypt.HashPassword(request.Password);
+
+            // 3) T?o user m?i
+            var newUser = new User
+            {
+                FullName = request.FullName,
+                Email = request.Email,
+                PhoneNumber = request.PhoneNumber,
+                PasswordHash = passwordHash,
+                IsActive = true,
+                RegionCode = "HQ" // Ho?c l?y t? context
+            };
+
+            _context.Users.Add(newUser);
+            await _context.SaveChangesAsync();
+
+            // 4) G?n role "User" m?c ??nh
+            var userRole = await _context.Roles.FirstOrDefaultAsync(r => r.RoleName == "User");
+            if (userRole != null)
+            {
+                _context.UserRoles.Add(new UserRole { UserID = newUser.UserID, RoleID = userRole.RoleID });
+                await _context.SaveChangesAsync();
+            }
+
+            return true;
         }
     }
 }
