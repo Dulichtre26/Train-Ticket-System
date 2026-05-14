@@ -39,7 +39,7 @@ namespace TrainTicket.WinForms.Forms
 
         private void InitializeUi()
         {
-            Text = "Qu\u1ea3n l\u00fd ga t\u00e0u";
+            Text = "Qu?n lý ga tàu";
             Width = 1200;
             Height = 700;
             BackColor = UiTheme.Background;
@@ -50,13 +50,13 @@ namespace TrainTicket.WinForms.Forms
             _topPanel.FillColor = UiTheme.Surface;
             _topPanel.ShadowDecoration.Enabled = true;
 
-            _lblTitle.Text = "Danh s\u00e1ch Ga t\u00e0u";
+            _lblTitle.Text = "Danh sách Ga tàu";
             _lblTitle.Font = new Font("Segoe UI", 16, FontStyle.Bold);
             _lblTitle.ForeColor = UiTheme.TextPrimary;
             _lblTitle.Location = new Point(20, 20);
             _lblTitle.AutoSize = true;
 
-            _btnAdd.Text = "+ Th\u00eam ga m\u1edbi";
+            _btnAdd.Text = "+ Thêm ga m?i";
             _btnAdd.Font = new Font("Segoe UI", 10, FontStyle.Bold);
             _btnAdd.Size = new Size(160, 40);
             _btnAdd.Location = new Point(250, 15);
@@ -67,6 +67,20 @@ namespace TrainTicket.WinForms.Forms
 
             _topPanel.Controls.Add(_lblTitle);
             _topPanel.Controls.Add(_btnAdd);
+
+            // GRID PANEL
+            _mainPanel.Dock = DockStyle.Fill;
+            _mainPanel.Padding = new Padding(20);
+            _mainPanel.FillColor = Color.Transparent;
+
+            _grid.Dock = DockStyle.Fill;
+            _grid.AllowUserToAddRows = false;
+            _grid.ReadOnly = true;
+            _grid.SelectionMode = DataGridViewSelectionMode.FullRowSelect;
+            _grid.AutoSizeColumnsMode = DataGridViewAutoSizeColumnsMode.Fill;
+            _grid.CellDoubleClick += Grid_CellDoubleClick;
+
+            _mainPanel.Controls.Add(_grid);
 
             // RIGHT PANEL (FORM)
             _rightPanel.Dock = DockStyle.Right;
@@ -111,6 +125,10 @@ namespace TrainTicket.WinForms.Forms
             _btnCancel.BorderRadius = 8;
             _btnCancel.FillColor = Color.Gray;
             _btnCancel.Click += (_, _) => HideRightPanel();
+
+            Controls.Add(_mainPanel);
+            Controls.Add(_rightPanel);
+            Controls.Add(_topPanel);
 
             _loadingOverlay = new LoadingOverlay(this);
             ApplyTheme();

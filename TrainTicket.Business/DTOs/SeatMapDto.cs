@@ -8,8 +8,11 @@ namespace TrainTicket.Business.DTOs
         public string LoaiToa { get; set; } = string.Empty;
         public string SoGhe { get; set; } = string.Empty;
         public string LoaiGhe { get; set; } = string.Empty;
+        public string HangGhe { get; set; } = "Economic";
+        public bool HasSocket { get; set; } = false;
         public int SeatID { get; set; }
         public string TrangThai { get; set; } = string.Empty;
         public decimal GiaVe { get; set; }
+        public bool IsAvailable => TrangThai == "Tr?ng";
     }
 }

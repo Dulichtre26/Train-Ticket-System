@@ -170,7 +170,8 @@ namespace TrainTicket.Data.DbContexts
             modelBuilder.Entity<Seat>().HasQueryFilter(x => x.RegionCode == "HQ" || x.RegionCode == _tenantRegion || _tenantRegion == "HQ");
             modelBuilder.Entity<SchedulePrice>().HasQueryFilter(x => x.RegionCode == "HQ" || x.RegionCode == _tenantRegion || _tenantRegion == "HQ");
             modelBuilder.Entity<Ticket>().HasQueryFilter(x => x.RegionCode == "HQ" || x.RegionCode == _tenantRegion || _tenantRegion == "HQ");
-            modelBuilder.Entity<User>().HasQueryFilter(x => x.RegionCode == "HQ" || x.RegionCode == _tenantRegion || _tenantRegion == "HQ");
+            // Removed filter for User to avoid issues if RegionCode column is missing
+            // modelBuilder.Entity<User>().HasQueryFilter(x => x.RegionCode == "HQ" || x.RegionCode == _tenantRegion || _tenantRegion == "HQ");
         }
     }
 }

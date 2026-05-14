@@ -1,29 +1,77 @@
+// ============================================================
+// FILE: TrainTicket.Data/ADO/ConnectionHelper.cs — NÂNG C?P
+// C?i ti?n:
+//   - ??c connection string t? appsettings.json n?u có
+//   - H? tr? connection string v?i server/database tùy ch?nh
+//   - Thêm helper BuildConnectionString
+// ============================================================
+using System.Text.Json;
+
 namespace TrainTicket.Data.ADO
 {
-    // Qu?n lý connection string v?i h? tr? phân m?nh.
     public static class ConnectionHelper
     {
-        // Connection default (Main / T?ng)
+        private static string _current = DefaultConnection;
+
+        // Connection strings m?c ??nh
         public static string DefaultConnection =>
-            "Server=localhost;Database=TrainTicketDB;" +
-            "Trusted_Connection=True;TrustServerCertificate=True;";
+            BuildConnectionString("localhost", "TrainTicketDB");
 
-        // Connection Phân m?nh (Site B?c)
         public static string NorthConnection =>
-            "Server=localhost;Database=TrainTicketDB_North;" +
-            "Trusted_Connection=True;TrustServerCertificate=True;";
+            BuildConnectionString("localhost", "TrainTicketDB_North");
 
-        // Connection Phân m?nh (Site Trung)
         public static string CentralConnection =>
-            "Server=localhost;Database=TrainTicketDB_Central;" +
-            "Trusted_Connection=True;TrustServerCertificate=True;";
+            BuildConnectionString("localhost", "TrainTicketDB_Central");
 
-        // Connection Phân m?nh (Site Nam)
         public static string SouthConnection =>
-            "Server=localhost;Database=TrainTicketDB_South;" +
-            "Trusted_Connection=True;TrustServerCertificate=True;";
+            BuildConnectionString("localhost", "TrainTicketDB_South");
 
-        // Bi?n l?u tr? Connection String hi?n t?i ???c ch?n (M?c ??nh là Main)
-        public static string CurrentConnectionString { get; set; } = DefaultConnection;
+        /// <summary>Connection string ?ang ???c ch?n (có th? thay ??i runtime)</summary>
+        public static string CurrentConnectionString
+        {
+            get => _current;
+            set => _current = value;
+        }
+
+        /// <summary>T?o connection string chu?n t? server + database</summary>
+        public static string BuildConnectionString(string server, string database,
+            string? user = null, string? password = null)
+        {
+            if (user != null && password != null)
+                return $"Server={server};Database={database};User Id={user};Password={password};" +
+                       "TrustServerCertificate=True;";
+
+            return $"Server={server};Database={database};" +
+                   "Trusted_Connection=True;TrustServerCertificate=True;";
+        }
+
+        /// <summary>Load connection string t? file config n?u t?n t?i</summary>
+        public static void LoadFromConfig(string configPath = "appsettings.json")
+        {
+            try
+            {
+                if (!File.Exists(configPath)) return;
+                var json  = File.ReadAllText(configPath);
+                var doc   = JsonDocument.Parse(json);
+                var conn  = doc.RootElement
+                               .GetProperty("ConnectionStrings")
+                               .GetProperty("DefaultConnection")
+                               .GetString();
+                if (!string.IsNullOrEmpty(conn))
+                    _current = conn;
+            }
+            catch { /* Gi? nguyên default n?u l?i */ }
+        }
+
+        /// <summary>Validate connection string hi?n t?i</summary>
+        public static bool IsValid()
+        {
+            try
+            {
+                var helper = new AdoHelper(_current);
+                return helper.TestConnection();
+            }
+            catch { return false; }
+        }
     }
 }

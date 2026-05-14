@@ -1,4 +1,7 @@
+﻿using System;
+using System.Collections.Generic;
 using System.Data;
+using System.Threading.Tasks;
 using TrainTicket.Business.DTOs;
 using TrainTicket.Business.Interfaces;
 using TrainTicket.Data.ADO;
@@ -9,121 +12,140 @@ namespace TrainTicket.Business.Services
     {
         private readonly AdoHelper _adoHelper;
 
-        public TicketService(AdoHelper adoHelper)
-        {
-            _adoHelper = adoHelper;
-        }
+        public TicketService(AdoHelper adoHelper) => _adoHelper = adoHelper;
 
+        // CẢI TIẾN: Sử dụng await trực tiếp với ExecuteStoredProcedureAsync
         public async Task<BookTicketResultDto?> BookTicketAsync(BookTicketRequestDto request)
         {
-            var parameters = new Dictionary<string, object?>
+            var p = new Dictionary<string, object?>
             {
                 ["@UserID"] = request.UserID,
                 ["@ScheduleID"] = request.ScheduleID,
                 ["@SeatID"] = request.SeatID,
                 ["@PassengerName"] = request.PassengerName,
                 ["@PassengerID"] = request.PassengerID,
-                ["@PassengerPhone"] = request.PassengerPhone,
+                ["@PassengerPhone"] = (object?)request.PassengerPhone ?? DBNull.Value,
                 ["@SeatType"] = request.SeatType,
-                ["@PaymentMethod"] = request.PaymentMethod
+                ["@PaymentMethod"] = request.PaymentMethod,
+                ["@DiscountCode"] = (object?)request.DiscountCode ?? DBNull.Value,
             };
 
-            var table = await _adoHelper.ExecuteStoredProcedureAsync("sp_DatVe", parameters);
-            if (table.Rows.Count == 0)
-            {
-                return null;
-            }
+            // Tận dụng phương thức Async trong AdoHelper
+            var table = await _adoHelper.ExecuteStoredProcedureAsync("sp_DatVe", p);
+            if (table.Rows.Count == 0) return null;
 
             var row = table.Rows[0];
-            var result = new BookTicketResultDto
+            return new BookTicketResultDto
             {
-                TicketID = row["TicketID"] == DBNull.Value ? 0 : Convert.ToInt32(row["TicketID"]),
-                TicketCode = row["TicketCode"]?.ToString() ?? string.Empty,
-                PassengerName = row["PassengerName"]?.ToString() ?? string.Empty,
-                SeatType = row["SeatType"]?.ToString() ?? string.Empty,
-                GiaVe = row["GiaVe"] == DBNull.Value ? 0 : Convert.ToDecimal(row["GiaVe"]),
-                TrangThaiVe = row["TrangThaiVe"]?.ToString() ?? string.Empty,
-                GioDi = row["GioDi"] == DBNull.Value ? DateTime.MinValue : Convert.ToDateTime(row["GioDi"]),
-                GioDen = row["GioDen"] == DBNull.Value ? DateTime.MinValue : Convert.ToDateTime(row["GioDen"]),
-                GaDi = row["GaDi"]?.ToString() ?? string.Empty,
-                GaDen = row["GaDen"]?.ToString() ?? string.Empty,
-                MaTau = row["MaTau"]?.ToString() ?? string.Empty,
-                MaToa = row["MaToa"]?.ToString() ?? string.Empty,
-                SoGhe = row["SoGhe"]?.ToString() ?? string.Empty
+                TicketID = row.Field<int>("TicketID"),
+                TicketCode = row.Field<string>("TicketCode") ?? "",
+                PassengerName = row.Field<string>("PassengerName") ?? "",
+                SeatType = row.Field<string>("SeatType") ?? "",
+                OriginalPrice = row.Field<decimal>("OriginalPrice"),
+                DiscountAmount = row.Field<decimal>("DiscountAmount"),
+                GiaVe = row.Field<decimal>("GiaVe"),
+                TrangThaiVe = row.Field<string>("TrangThaiVe") ?? "",
+                GioDi = row.Field<DateTime>("GioDi"),
+                GioDen = row.Field<DateTime>("GioDen"),
+                GaDi = row.Field<string>("GaDi") ?? "",
+                GaDen = row.Field<string>("GaDen") ?? "",
+                MaTau = row.Field<string>("MaTau") ?? "",
+                MaToa = row.Field<string>("MaToa") ?? "",
+                SoGhe = row.Field<string>("SoGhe") ?? "",
             };
-
-            return result;
         }
 
-        public async Task<bool> CancelTicketAsync(int ticketId, int userId, string? cancelReason = null)
+        public async Task<CancelTicketResultDto> CancelTicketAsync(int ticketId, int userId, string? cancelReason = null)
         {
-            var parameters = new Dictionary<string, object?>
+            var p = new Dictionary<string, object?>
             {
                 ["@TicketID"] = ticketId,
                 ["@UserID"] = userId,
-                ["@CancelReason"] = cancelReason
+                ["@CancelReason"] = (object?)cancelReason ?? DBNull.Value
             };
 
-            var table = await _adoHelper.ExecuteStoredProcedureAsync("sp_HuyVe", parameters);
-            return table.Rows.Count > 0;
+            try
+            {
+                var table = await _adoHelper.ExecuteStoredProcedureAsync("sp_HuyVe", p);
+                if (table.Rows.Count == 0)
+                    return new CancelTicketResultDto { Message = "Không thể hủy vé.", Success = false };
+
+                var row = table.Rows[0];
+                return new CancelTicketResultDto
+                {
+                    Success = row.Field<int>("Success") == 1,
+                    RefundAmount = row.Field<decimal>("RefundAmount"),
+                    RefundPercent = row.Field<decimal>("RefundPercent"),
+                    Message = $"Hoàn tiền {row.Field<decimal>("RefundPercent"):F0}% = {row.Field<decimal>("RefundAmount"):N0} VNĐ"
+                };
+            }
+            catch (Exception ex)
+            {
+                return new CancelTicketResultDto { Message = ex.Message, Success = false };
+            }
         }
 
         public async Task<bool> ConfirmPaymentAsync(int ticketId, string? transactionId = null)
         {
-            var parameters = new Dictionary<string, object?>
+            var p = new Dictionary<string, object?>
             {
                 ["@TicketID"] = ticketId,
-                ["@TransactionID"] = transactionId
+                ["@TransactionID"] = (object?)transactionId ?? DBNull.Value
             };
 
-            var table = await _adoHelper.ExecuteStoredProcedureAsync("sp_XacNhanThanhToan", parameters);
+            var table = await _adoHelper.ExecuteStoredProcedureAsync("sp_XacNhanThanhToan", p);
             return table.Rows.Count > 0;
         }
 
-        public async Task<List<TicketHistoryDto>> GetTicketsAsync(int? userId = null, string? status = null)
+        public async Task<DataTable> GetTicketsAsync(
+            int? userId = null, string? status = null,
+            DateTime? from = null, DateTime? to = null, string? ticketCode = null)
         {
-            var parameters = new Dictionary<string, object?>
+            var p = new Dictionary<string, object?>
             {
-                ["@UserID"] = userId
+                ["@UserID"] = (object?)userId ?? DBNull.Value,
+                ["@Status"] = (object?)status ?? DBNull.Value,
+                ["@TuNgay"] = (object?)(from?.Date) ?? DBNull.Value,
+                ["@DenNgay"] = (object?)(to?.Date) ?? DBNull.Value,
+                ["@MaVe"] = (object?)ticketCode ?? DBNull.Value,
             };
 
-            var table = await _adoHelper.ExecuteStoredProcedureAsync("sp_LichSuVeKhachHang", parameters);
-            var result = new List<TicketHistoryDto>();
+            return await _adoHelper.ExecuteStoredProcedureAsync("sp_LayDanhSachVe", p);
+        }
 
-            foreach (DataRow row in table.Rows)
+        public async Task<bool> CheckInAsync(string ticketCode)
+        {
+            var p = new Dictionary<string, object?> { ["@TicketCode"] = ticketCode };
+            try
             {
-                var dto = new TicketHistoryDto();
-                if (table.Columns.Contains("TicketID") && row["TicketID"] != DBNull.Value) dto.TicketID = Convert.ToInt32(row["TicketID"]);
-                if (table.Columns.Contains("TicketCode") && row["TicketCode"] != DBNull.Value) dto.TicketCode = row["TicketCode"].ToString() ?? "";
-                if (table.Columns.Contains("PassengerName") && row["PassengerName"] != DBNull.Value) dto.PassengerName = row["PassengerName"].ToString() ?? "";
-                if (table.Columns.Contains("SeatType") && row["SeatType"] != DBNull.Value) dto.SeatType = row["SeatType"].ToString() ?? "";
-                if (table.Columns.Contains("GiaVe") && row["GiaVe"] != DBNull.Value) dto.GiaVe = Convert.ToDecimal(row["GiaVe"]);
-                if (table.Columns.Contains("TrangThaiVe") && row["TrangThaiVe"] != DBNull.Value) dto.TrangThaiVe = row["TrangThaiVe"].ToString() ?? "";
-                if (table.Columns.Contains("GioDi") && row["GioDi"] != DBNull.Value) dto.GioDi = Convert.ToDateTime(row["GioDi"]);
-                if (table.Columns.Contains("GioDen") && row["GioDen"] != DBNull.Value) dto.GioDen = Convert.ToDateTime(row["GioDen"]);
-                if (table.Columns.Contains("GaDi") && row["GaDi"] != DBNull.Value) dto.GaDi = row["GaDi"].ToString() ?? "";
-                if (table.Columns.Contains("GaDen") && row["GaDen"] != DBNull.Value) dto.GaDen = row["GaDen"].ToString() ?? "";
-                if (table.Columns.Contains("MaTau") && row["MaTau"] != DBNull.Value) dto.MaTau = row["MaTau"].ToString() ?? "";
-                if (table.Columns.Contains("MaToa") && row["MaToa"] != DBNull.Value) dto.MaToa = row["MaToa"].ToString() ?? "";
-                if (table.Columns.Contains("SoGhe") && row["SoGhe"] != DBNull.Value) dto.SoGhe = row["SoGhe"].ToString() ?? "";
-                if (table.Columns.Contains("Status") && row["Status"] != DBNull.Value) dto.Status = row["Status"].ToString() ?? "";
-                if (table.Columns.Contains("RegionCode") && row["RegionCode"] != DBNull.Value) dto.RegionCode = row["RegionCode"].ToString() ?? "";
-
-                // Gi? t�nh t??ng th�ch: N?u kh�ng c� Status nh?ng c� TrangThaiVe th� map qua (ho?c ng??c l?i)
-                if (string.IsNullOrEmpty(dto.Status) && !string.IsNullOrEmpty(dto.TrangThaiVe))
-                {
-                    dto.Status = dto.TrangThaiVe;
-                }
-
-                result.Add(dto);
+                var table = await _adoHelper.ExecuteStoredProcedureAsync("sp_CheckIn", p);
+                return table.Rows.Count > 0;
             }
-
-            if (!string.IsNullOrWhiteSpace(status))
+            catch
             {
-                result = result.Where(x => x.TrangThaiVe == status || x.Status == status).ToList();
+                return false;
             }
+        }
 
-            return result;
+        public async Task<decimal> CalculatePriceAsync(int scheduleId, string seatType, string? discountCode)
+        {
+            var p = new Dictionary<string, object?>
+            {
+                ["@ScheduleID"] = scheduleId,
+                ["@SeatType"] = seatType,
+                ["@DiscountCode"] = (object?)discountCode ?? DBNull.Value
+            };
+
+            // Sử dụng ExecuteQueryAsync để lấy giá vé tính toán được từ SQL Function
+            var table = await _adoHelper.ExecuteQueryAsync(
+                @"SELECT dbo.fn_TinhGiaVe(
+                    (SELECT Price FROM SchedulePrices WHERE ScheduleID=@ScheduleID AND SeatType=@SeatType),
+                    @DiscountCode) AS FinalPrice", p);
+
+            if (table.Rows.Count == 0 || table.Rows[0]["FinalPrice"] == DBNull.Value)
+                return 0m;
+
+            return Convert.ToDecimal(table.Rows[0]["FinalPrice"]);
         }
     }
 }

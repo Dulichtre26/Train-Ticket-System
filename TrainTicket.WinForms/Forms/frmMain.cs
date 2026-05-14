@@ -6,15 +6,16 @@ using TrainTicket.WinForms.Helpers;
 
 namespace TrainTicket.WinForms.Forms
 {
-    // Form chính sau đăng nhập với layout sidebar hiện đại.
     public class frmMain : Form
     {
-        private readonly IScheduleService _scheduleService;
-        private readonly ITicketService _ticketService;
-        private readonly IReportService _reportService;
-        private readonly ICatalogService _catalogService;
-        private readonly TrainTicketDbContext _dbContext;
+        private readonly IScheduleService  _scheduleService;
+        private readonly ITicketService    _ticketService;
+        private readonly IReportService    _reportService;
+        private readonly ICatalogService   _catalogService;
+        private readonly INotificationService _notiService;   // [MỚI]
+        private readonly TrainTicketDbContext  _dbContext;
 
+        // Layout panels
         private readonly Guna2Panel _sidebar  = new();
         private readonly Guna2Panel _header   = new();
         private readonly Guna2Panel _content  = new();
@@ -27,397 +28,410 @@ namespace TrainTicket.WinForms.Forms
         private readonly Guna2Button _btnStations  = new();
         private readonly Guna2Button _btnRoutes    = new();
         private readonly Guna2Button _btnSchedules = new();
-        private readonly Guna2Button _btnTheme     = new();
         private readonly Guna2Button _btnTrains    = new();
+        private readonly Guna2Button _btnTheme     = new();
         private readonly Guna2Button _btnCollapse  = new();
+        private readonly Guna2Button _btnLogout    = new();
 
         // Header elements
-        private readonly Label _lblWelcome = new();
-        private readonly Panel _avatarCircle = new();
-        private readonly Label _lblAvatarLetter = new();
+        private readonly Label  _lblWelcome    = new();
+        private readonly Label  _lblBreadcrumb = new();   // [MỚI]
+        private readonly Panel  _avatarCircle  = new();
+        private readonly Label  _lblAvatarLetter = new();
+        private readonly Label  _lblRegionBadge  = new();  // [MỚI]
 
-        // Sidebar brand area
-        private readonly Panel _brandPanel = new();
+        // Notification bell [MỚI]
+        private readonly Guna2Button _btnNoti    = new();
+        private readonly Label       _lblNotiBadge = new();
+        private readonly System.Windows.Forms.Timer _notiTimer = new();
+
+        // Sidebar brand
+        private readonly Panel _brandPanel  = new();
         private readonly Label _lblBrandIcon = new();
         private readonly Label _lblBrandName = new();
         private readonly Label _lblBrandSub  = new();
 
         private bool _sidebarCollapsed = false;
+        private const int SidebarExpanded  = 220;
+        private const int SidebarCollapsed = 64;
 
         public frmMain(
-            IScheduleService scheduleService,
-            ITicketService ticketService,
-            IReportService reportService,
-            ICatalogService catalogService,
-            TrainTicketDbContext dbContext)
+            IScheduleService scheduleService, ITicketService ticketService,
+            IReportService reportService, ICatalogService catalogService,
+            INotificationService notiService, TrainTicketDbContext dbContext)
         {
             _scheduleService = scheduleService;
             _ticketService   = ticketService;
             _reportService   = reportService;
             _catalogService  = catalogService;
+            _notiService     = notiService;
             _dbContext       = dbContext;
 
             InitializeUi();
             ApplyRolePermission();
-            this.Resize += FrmMain_Resize;
+            this.Resize  += (_, _) => LayoutPanels();
+            this.Shown   += async (_, _) => await RefreshNotiBadgeAsync();
         }
 
         private void InitializeUi()
         {
-            Text            = "TrainTicket";
+            Text            = "TrainTicket v2.0";
             StartPosition   = FormStartPosition.CenterScreen;
-            Width           = 1200;
-            Height          = 750;
-            MinimumSize     = new Size(900, 600);
+            Width           = 1280;
+            Height          = 780;
+            MinimumSize     = new Size(960, 600);
             BackColor       = UiTheme.Background;
             FormBorderStyle = FormBorderStyle.Sizable;
 
             BuildSidebar();
             BuildHeader();
             BuildContent();
+            LayoutPanels();
 
             Controls.Add(_content);
             Controls.Add(_header);
             Controls.Add(_sidebar);
         }
 
-        // ─── SIDEBAR ────────────────────────────────────────────────
         private void BuildSidebar()
         {
+            _sidebar.Width     = SidebarExpanded;
             _sidebar.Dock      = DockStyle.Left;
-            _sidebar.Width     = 240;
-            _sidebar.FillColor = UiTheme.Sidebar; // slate-800 trên light, slate-900 trên dark — luôn tối
+            _sidebar.FillColor = UiTheme.Sidebar;
 
-            // Brand area — logo + tên app
-            _brandPanel.Left        = 0;
-            _brandPanel.Top         = 0;
-            _brandPanel.Width       = 240;
-            _brandPanel.Height      = 72;
-            _brandPanel.BackColor   = Color.FromArgb(15, 23, 42); // slate-900 — đậm hơn 1 tông
-            _brandPanel.Cursor      = Cursors.Default;
+            // Brand
+            _brandPanel.Width     = SidebarExpanded;
+            _brandPanel.Height    = 70;
+            _brandPanel.BackColor = Color.Transparent;
+            _brandPanel.Top       = 0;
 
             _lblBrandIcon.Text      = "🚂";
             _lblBrandIcon.Font      = new Font("Segoe UI Emoji", 20);
             _lblBrandIcon.ForeColor = Color.White;
-            _lblBrandIcon.Location  = new Point(16, 14);
+            _lblBrandIcon.Left      = 16; _lblBrandIcon.Top = 14;
             _lblBrandIcon.AutoSize  = true;
-            _lblBrandIcon.BackColor = Color.Transparent;
 
-            _lblBrandName.Text      = "TRAIN TICKET";
-            _lblBrandName.Font      = new Font("Segoe UI", 11, FontStyle.Bold);
+            _lblBrandName.Text      = "TrainTicket";
+            _lblBrandName.Font      = new Font("Segoe UI", 13, FontStyle.Bold);
             _lblBrandName.ForeColor = Color.White;
-            _lblBrandName.Location  = new Point(56, 16);
+            _lblBrandName.Left      = 56; _lblBrandName.Top = 14;
             _lblBrandName.AutoSize  = true;
-            _lblBrandName.BackColor = Color.Transparent;
 
-            _lblBrandSub.Text       = "Hệ thống đặt vé";
-            _lblBrandSub.Font       = new Font("Segoe UI", 8);
-            _lblBrandSub.ForeColor  = Color.FromArgb(148, 163, 184); // slate-400
-            _lblBrandSub.Location   = new Point(56, 38);
-            _lblBrandSub.AutoSize   = true;
-            _lblBrandSub.BackColor  = Color.Transparent;
+            _lblBrandSub.Text      = "v2.0";
+            _lblBrandSub.Font      = new Font("Segoe UI", 8);
+            _lblBrandSub.ForeColor = Color.FromArgb(148, 163, 184);
+            _lblBrandSub.Left      = 58; _lblBrandSub.Top = 38;
+            _lblBrandSub.AutoSize  = true;
 
-            _brandPanel.Controls.Add(_lblBrandIcon);
-            _brandPanel.Controls.Add(_lblBrandName);
-            _brandPanel.Controls.Add(_lblBrandSub);
+            _brandPanel.Controls.AddRange(new Control[] { _lblBrandIcon, _lblBrandName, _lblBrandSub });
 
-            // Divider under brand
-            var divider = new Panel
+            // Nav buttons
+            var navItems = new[] 
             {
-                Left      = 16,
-                Top       = 72,
-                Width     = 208,
-                Height    = 1,
-                BackColor = Color.FromArgb(51, 65, 85) // slate-700
+                (_btnSearch,    "🔍", "Tìm chuyến tàu",  74),
+                (_btnTickets,   "🎫", "Quản lý vé",      118),
+                (_btnPayments,  "💳", "Thanh toán",       162),
+                (_btnReports,   "📊", "Báo cáo",          206),
+                (_btnStations,  "🏛", "Ga tàu",           280),
+                (_btnRoutes,    "🗺", "Tuyến đường",      324),
+                (_btnSchedules, "📅", "Lịch trình",       368),
+                (_btnTrains,    "🚃", "Đoàn tàu",         412),
             };
 
-            // Nav buttons — luôn dùng màu nav cố định vì sidebar luôn tối
-            _btnSearch.Text    = "🔍  Tìm chuyến";
-            _btnTickets.Text   = "🎫  Quản lý vé";
-            _btnPayments.Text  = "💳  Thanh toán";
-            _btnReports.Text   = "📊  Báo cáo";
-            _btnTrains.Text    = "🚂  Quản lý tàu";
-            _btnStations.Text  = "🏙️  Quản lý ga";
-            _btnRoutes.Text    = "🛣️  Quản lý tuyến";
-            _btnSchedules.Text = "⏰  Lịch trình";
-            _btnTheme.Text     = "🎨  Giao diện";
-
-            ConfigureNavButton(_btnSearch,    86,  OpenSearchForm);
-            ConfigureNavButton(_btnTickets,   138, OpenTicketsForm);
-            ConfigureNavButton(_btnPayments,  190, OpenPaymentsForm);
-            ConfigureNavButton(_btnReports,   242, OpenReportsForm);
-            ConfigureNavButton(_btnTrains,    294, OpenTrainsForm);
-            ConfigureNavButton(_btnStations,  346, OpenStationsForm);
-            ConfigureNavButton(_btnRoutes,    398, OpenRoutesForm);
-            ConfigureNavButton(_btnSchedules, 450, OpenSchedulesForm);
-            ConfigureNavButton(_btnTheme,     502, ToggleTheme);
+            foreach (var (btn, icon, text, top) in navItems)
+            {
+                btn.Left         = 8;
+                btn.Top          = top;
+                btn.Width        = SidebarExpanded - 16;
+                btn.Height       = 40;
+                btn.BorderRadius = 10;
+                btn.FillColor    = Color.Transparent;
+                btn.HoverState.FillColor = Color.FromArgb(99, 102, 241, 40);
+                btn.ForeColor    = UiTheme.NavText;
+                btn.Font         = new Font("Segoe UI", 10);
+                btn.Text         = $"  {icon}  {text}";
+                btn.TextAlign    = HorizontalAlignment.Left;
+                btn.Cursor       = Cursors.Hand;
+            }
 
             // Collapse button
-            _btnCollapse.Text                = "◀";
-            _btnCollapse.Size                = new Size(28, 28);
-            _btnCollapse.Location            = new Point(_sidebar.Width - 38, 22);
-            _btnCollapse.BorderRadius        = 14;
-            _btnCollapse.FillColor           = Color.FromArgb(51, 65, 85);
-            _btnCollapse.HoverState.FillColor= UiTheme.Primary;
-            _btnCollapse.Font                = new Font("Segoe UI", 9, FontStyle.Bold);
-            _btnCollapse.ForeColor           = Color.White;
-            _btnCollapse.Click              += BtnCollapse_Click;
+            _btnCollapse.Left = 8; _btnCollapse.Top = 500;
+            _btnCollapse.Width = SidebarExpanded - 16; _btnCollapse.Height = 36;
+            _btnCollapse.BorderRadius = 10;
+            _btnCollapse.FillColor = Color.Transparent;
+            _btnCollapse.ForeColor = UiTheme.NavText;
+            _btnCollapse.Text = "  ◀  Thu gọn";
+            _btnCollapse.Font = new Font("Segoe UI", 9);
+            _btnCollapse.TextAlign = HorizontalAlignment.Left;
+            _btnCollapse.Click += BtnCollapse_Click;
 
-            // Add all to sidebar
-            _sidebar.Controls.Add(_brandPanel);
-            _sidebar.Controls.Add(divider);
-            _sidebar.Controls.Add(_btnSearch);
-            _sidebar.Controls.Add(_btnTickets);
-            _sidebar.Controls.Add(_btnPayments);
-            _sidebar.Controls.Add(_btnReports);
-            _sidebar.Controls.Add(_btnTrains);
-            _sidebar.Controls.Add(_btnStations);
-            _sidebar.Controls.Add(_btnRoutes);
-            _sidebar.Controls.Add(_btnSchedules);
-            _sidebar.Controls.Add(_btnTheme);
-            _sidebar.Controls.Add(_btnCollapse);
-        }
-
-        private static void ConfigureNavButton(Guna2Button button, int top, Action onClick)
-        {
-            button.Left                  = 16;
-            button.Top                   = top;
-            button.Width                 = 208;
-            button.Height                = 42;
-            button.BorderRadius          = 10;
-            button.FillColor             = UiTheme.NavButton;
-            button.HoverState.FillColor  = UiTheme.NavButtonHover;
-            button.Font                  = new Font("Segoe UI", 9, FontStyle.Bold);
-            button.ForeColor             = UiTheme.NavText;
-            button.HoverState.ForeColor  = Color.White;
-            button.TextAlign             = HorizontalAlignment.Left;
-            button.Click                += (_, _) => onClick();
-        }
-
-        // ─── HEADER ─────────────────────────────────────────────────
-        private void BuildHeader()
-        {
-            _header.Dock                      = DockStyle.Top;
-            _header.Height                    = 64;
-            _header.FillColor                 = UiTheme.Surface;
-            _header.ShadowDecoration.Enabled  = true;
-            _header.ShadowDecoration.Color    = Color.FromArgb(30, 0, 0, 0);
-            _header.ShadowDecoration.Depth    = 4;
-
-            // Welcome text
-            var roleName     = MapRoleName(SessionManager.CurrentRole);
-            var userFullName = SessionManager.CurrentUser?.FullName ?? "User";
-            var welcomeText  = $"Xin chào, {userFullName}";
-            var roleText     = userFullName == roleName ? "" : $" — {roleName}";
-
-            _lblWelcome.Text      = welcomeText;
-            _lblWelcome.Font      = new Font("Segoe UI", 11, FontStyle.Bold);
-            _lblWelcome.ForeColor = UiTheme.TextPrimary;
-            _lblWelcome.AutoSize  = true;
-            _lblWelcome.Left      = 24;
-            _lblWelcome.Top       = 22;
-
-            var lblRole = new Label
+            // Theme toggle
+            _btnTheme.Left = 8; _btnTheme.Top = 540;
+            _btnTheme.Width = SidebarExpanded - 16; _btnTheme.Height = 36;
+            _btnTheme.BorderRadius = 10;
+            _btnTheme.FillColor = Color.Transparent;
+            _btnTheme.ForeColor = UiTheme.NavText;
+            _btnTheme.Text = UiTheme.IsDark ? "  🌞  Chế độ sáng" : "  🌙  Chế độ tối";
+            _btnTheme.Font = new Font("Segoe UI", 9);
+            _btnTheme.TextAlign = HorizontalAlignment.Left;
+            _btnTheme.Click += (_, _) =>
             {
-                Text      = roleText,
-                Font      = new Font("Segoe UI", 9),
-                ForeColor = UiTheme.TextSecondary,
-                AutoSize  = true,
-                Left      = _lblWelcome.Left + TextRenderer.MeasureText(welcomeText, _lblWelcome.Font).Width,
-                Top       = 25
+                UiTheme.Toggle();
+                _btnTheme.Text = UiTheme.IsDark ? "  🌞  Chế độ sáng" : "  🌙  Chế độ tối";
+                ApplyThemeToAll();
             };
 
-            // Avatar circle (góc phải header)
-            _avatarCircle.Width     = 40;
-            _avatarCircle.Height    = 40;
-            _avatarCircle.BackColor = UiTheme.Primary;
-            _avatarCircle.Cursor    = Cursors.Hand;
+            // Logout
+            _btnLogout.Left = 8; _btnLogout.Top = 580;
+            _btnLogout.Width = SidebarExpanded - 16; _btnLogout.Height = 36;
+            _btnLogout.BorderRadius = 10;
+            _btnLogout.FillColor = Color.Transparent;
+            _btnLogout.ForeColor = Color.FromArgb(248, 113, 113);
+            _btnLogout.Text = "  🚪  Đăng xuất";
+            _btnLogout.Font = new Font("Segoe UI", 9);
+            _btnLogout.TextAlign = HorizontalAlignment.Left;
+            _btnLogout.Click += BtnLogout_Click;
 
-            _lblAvatarLetter.Text      = (SessionManager.CurrentUser?.FullName ?? "U").Substring(0, 1).ToUpper();
+            // Wire nav events
+            _btnSearch.Click    += (_, _) => OpenChild(new frmSearch(_scheduleService, _ticketService, _dbContext), "Tìm chuyến tàu");
+            _btnTickets.Click   += (_, _) => OpenChild(new frmTickets(_ticketService, _dbContext), "Quản lý vé");
+            _btnPayments.Click  += (_, _) => MessageBox.Show("Chọn vé từ màn hình Quản lý vé để thanh toán.", "Thông báo", MessageBoxButtons.OK, MessageBoxIcon.Information);
+            _btnReports.Click   += (_, _) => OpenChild(new frmReports(_reportService), "Báo cáo doanh thu");
+
+            _btnStations.Click  += (_, _) => OpenChild(new frmStations(_catalogService), "Ga tàu");
+            _btnRoutes.Click    += (_, _) => OpenChild(new frmRoutes(_catalogService), "Tuyến đường");
+            _btnSchedules.Click += (_, _) => OpenChild(new frmSchedules(_catalogService), "Lịch trình");
+            _btnTrains.Click    += (_, _) => OpenChild(new frmTrains(_catalogService), "Đoàn tàu");
+
+            _sidebar.Controls.AddRange(new Control[] 
+            {
+                _brandPanel,
+                _btnSearch, _btnTickets, _btnPayments, _btnReports,
+                _btnStations, _btnRoutes, _btnSchedules, _btnTrains,
+                _btnCollapse, _btnTheme, _btnLogout
+            });
+        }
+
+        private void BuildHeader()
+        {
+            _header.Height    = 60;
+            _header.Dock      = DockStyle.Top;
+            _header.FillColor = UiTheme.Surface;
+            _header.ShadowDecoration.Enabled = true;
+            _header.ShadowDecoration.Depth   = 4;
+
+            // Welcome
+            _lblWelcome.Text      = $"Xin chào, {SessionManager.CurrentUser?.FullName ?? ""}";
+            _lblWelcome.Font      = new Font("Segoe UI", 10, FontStyle.Bold);
+            _lblWelcome.ForeColor = UiTheme.TextPrimary;
+            _lblWelcome.Left      = 20; _lblWelcome.Top = 10;
+            _lblWelcome.AutoSize  = true;
+
+            // Breadcrumb [MỚI]
+            _lblBreadcrumb.Text      = "Dashboard";
+            _lblBreadcrumb.Font      = new Font("Segoe UI", 9);
+            _lblBreadcrumb.ForeColor = UiTheme.TextSecondary;
+            _lblBreadcrumb.Left      = 20; _lblBreadcrumb.Top = 32;
+            _lblBreadcrumb.AutoSize  = true;
+
+            // Region badge [MỚI]
+            _lblRegionBadge.Text      = "🌐 " + (SessionManager.CurrentRegion ?? "HQ");
+            _lblRegionBadge.Font      = new Font("Segoe UI", 8, FontStyle.Bold);
+            _lblRegionBadge.ForeColor = Color.White;
+            _lblRegionBadge.BackColor = UiTheme.Primary;
+            _lblRegionBadge.Left      = 200; _lblRegionBadge.Top = 18;
+            _lblRegionBadge.AutoSize  = false;
+            _lblRegionBadge.Width     = 80; _lblRegionBadge.Height = 22;
+            _lblRegionBadge.TextAlign = ContentAlignment.MiddleCenter;
+
+            // Notification bell [MỚI]
+            _btnNoti.Text         = "🔔";
+            _btnNoti.Font         = new Font("Segoe UI Emoji", 14);
+            _btnNoti.Width        = 44; _btnNoti.Height = 44;
+            _btnNoti.BorderRadius = 22;
+            _btnNoti.FillColor    = Color.Transparent;
+            _btnNoti.Anchor       = AnchorStyles.Top | AnchorStyles.Right;
+            _btnNoti.Click       += async (_, _) => await ShowNotificationsAsync();
+
+            _lblNotiBadge.Width     = 18; _lblNotiBadge.Height = 18;
+            _lblNotiBadge.BackColor = Color.FromArgb(239, 68, 68);
+            _lblNotiBadge.ForeColor = Color.White;
+            _lblNotiBadge.Font      = new Font("Segoe UI", 7, FontStyle.Bold);
+            _lblNotiBadge.TextAlign = ContentAlignment.MiddleCenter;
+            _lblNotiBadge.Visible   = false;
+            _lblNotiBadge.Anchor    = AnchorStyles.Top | AnchorStyles.Right;
+
+            // Avatar
+            _avatarCircle.Width     = 38; _avatarCircle.Height = 38;
+            _avatarCircle.BackColor = UiTheme.Primary;
+            _avatarCircle.Anchor    = AnchorStyles.Top | AnchorStyles.Right;
+
+            _lblAvatarLetter.Text      = SessionManager.CurrentUser?.AvatarLetter ?? "?";
             _lblAvatarLetter.Font      = new Font("Segoe UI", 14, FontStyle.Bold);
             _lblAvatarLetter.ForeColor = Color.White;
-            _lblAvatarLetter.AutoSize  = false;
-            _lblAvatarLetter.TextAlign = ContentAlignment.MiddleCenter;
             _lblAvatarLetter.Dock      = DockStyle.Fill;
-            _lblAvatarLetter.BackColor = Color.Transparent;
-
+            _lblAvatarLetter.TextAlign = ContentAlignment.MiddleCenter;
             _avatarCircle.Controls.Add(_lblAvatarLetter);
             _avatarCircle.Paint += (s, e) =>
             {
-                // Vẽ hình tròn thay vì vuông
-                using var path = new System.Drawing.Drawing2D.GraphicsPath();
-                path.AddEllipse(0, 0, _avatarCircle.Width - 1, _avatarCircle.Height - 1);
+                var p = (Panel)s!;
                 e.Graphics.SmoothingMode = System.Drawing.Drawing2D.SmoothingMode.AntiAlias;
-                using var brush = new SolidBrush(UiTheme.Primary);
-                e.Graphics.FillPath(brush, path);
+                using var path = new System.Drawing.Drawing2D.GraphicsPath();
+                path.AddEllipse(0, 0, p.Width - 1, p.Height - 1);
+                e.Graphics.SetClip(path);
+                e.Graphics.FillEllipse(new SolidBrush(UiTheme.Primary), 0, 0, p.Width - 1, p.Height - 1);
             };
 
-            // Anchor avatar về bên phải
-            _header.Controls.Add(_lblWelcome);
-            _header.Controls.Add(lblRole);
-            _header.Controls.Add(_avatarCircle);
+            _header.Controls.AddRange(new Control[] 
+            {
+                _lblWelcome, _lblBreadcrumb, _lblRegionBadge,
+                _btnNoti, _lblNotiBadge, _avatarCircle
+            });
 
+            // Định vị động khi resize
             _header.Resize += (_, _) =>
             {
-                _avatarCircle.Left = _header.Width - 64;
-                _avatarCircle.Top  = (_header.Height - 40) / 2;
+                _avatarCircle.Left = _header.Width - 56;
+                _avatarCircle.Top  = 11;
+                _btnNoti.Left      = _header.Width - 110;
+                _btnNoti.Top       = 8;
+                _lblNotiBadge.Left = _header.Width - 90;
+                _lblNotiBadge.Top  = 8;
             };
+
+            // Notification polling mỗi 60 giây
+            _notiTimer.Interval = 60_000;
+            _notiTimer.Tick    += async (_, _) => await RefreshNotiBadgeAsync();
+            _notiTimer.Start();
         }
 
-        private static string MapRoleName(string? role) => role switch
-        {
-            "Admin"    => "Quản Trị Viên",
-            "Staff"    => "Nhân Viên",
-            "Manager"  => "Quản lý",
-            "Customer" => "Khách Hàng",
-            _          => role ?? ""
-        };
-
-        // ─── CONTENT ────────────────────────────────────────────────
         private void BuildContent()
         {
-            _content.Dock      = DockStyle.Fill;
-            _content.FillColor = UiTheme.Background;
+            _content.Dock       = DockStyle.Fill;
+            _content.FillColor  = UiTheme.Background;
+            _content.Padding    = new Padding(16);
+            ShowDashboard();
         }
 
-        // ─── THEME TOGGLE ────────────────────────────────────────────
-        private void ToggleTheme()
+        private void ShowDashboard()
         {
-            UiTheme.Toggle();
-            BackColor          = UiTheme.Background;
-            _header.FillColor  = UiTheme.Surface;
-            _content.FillColor = UiTheme.Background;
-            _lblWelcome.ForeColor = UiTheme.TextPrimary;
-
-            if (_content.Controls.OfType<IThemeableForm>().FirstOrDefault() is IThemeableForm t)
-                t.ApplyTheme();
+            _content.Controls.Clear();
+            var lbl = new Label
+            {
+                Text      = $"👋 Chào mừng, {SessionManager.CurrentUser?.FullName}!\n\nChọn chức năng từ menu bên trái để bắt đầu.",
+                Font      = new Font("Segoe UI", 13),
+                ForeColor = UiTheme.TextSecondary,
+                Dock      = DockStyle.Fill,
+                TextAlign = ContentAlignment.MiddleCenter
+            };
+            _content.Controls.Add(lbl);
+            _lblBreadcrumb.Text = "Dashboard";
         }
 
-        // ─── SIDEBAR COLLAPSE ────────────────────────────────────────
-        private void BtnCollapse_Click(object? sender, EventArgs e) => ToggleSidebar();
+        private void OpenChild(Form child, string title)
+        {
+            _content.Controls.Clear();
+            child.TopLevel   = false;
+            child.FormBorderStyle = FormBorderStyle.None;
+            child.Dock       = DockStyle.Fill;
+            _content.Controls.Add(child);
+            child.Show();
+            _lblBreadcrumb.Text = $"🏠 > {title}";
+            HighlightActiveButton(title);
+        }
 
-        private void ToggleSidebar()
+        private void HighlightActiveButton(string title)
+        {
+            var all = new[] { _btnSearch, _btnTickets, _btnPayments,
+                              _btnReports, _btnStations, _btnRoutes, _btnSchedules, _btnTrains };
+            foreach (var b in all) b.FillColor = Color.Transparent;
+
+            var hit = all.FirstOrDefault(b => b.Text.Contains(title.Split(' ')[0], StringComparison.OrdinalIgnoreCase));
+            if (hit != null) hit.FillColor = Color.FromArgb(99, 102, 241, 50);
+        }
+
+        private void LayoutPanels()
+        {
+            _header.Width = Width - _sidebar.Width;
+            _header.Left  = _sidebar.Width;
+        }
+
+        private async Task RefreshNotiBadgeAsync()
+        {
+            if (SessionManager.CurrentUser == null) return;
+            try
+            {
+                var count = await _notiService.GetUnreadCountAsync(SessionManager.CurrentUser.UserID);
+                _lblNotiBadge.Visible = count > 0;
+                _lblNotiBadge.Text    = count > 9 ? "9+" : count.ToString();
+            }
+            catch { /* Không crash nếu lỗi noti */ }
+        }
+
+        private async Task ShowNotificationsAsync()
+        {
+            if (SessionManager.CurrentUser == null) return;
+            var notis = await _notiService.GetUnreadAsync(SessionManager.CurrentUser.UserID);
+            if (notis.Count == 0) { MessageBox.Show("Không có thông báo mới.", "Thông báo"); return; }
+
+            var msg = string.Join("\n\n", notis.Take(5).Select(n => $"[{n.Type}] {n.Title}\n{n.Body}"));
+            MessageBox.Show(msg, $"Thông báo ({notis.Count})", MessageBoxButtons.OK, MessageBoxIcon.Information);
+
+            await _notiService.MarkAllReadAsync(SessionManager.CurrentUser.UserID);
+            await RefreshNotiBadgeAsync();
+        }
+
+        private void BtnCollapse_Click(object? sender, EventArgs e)
         {
             _sidebarCollapsed = !_sidebarCollapsed;
+            _sidebar.Width = _sidebarCollapsed ? SidebarCollapsed : SidebarExpanded;
 
-            if (_sidebarCollapsed)
+            var btnList = new[] { _btnSearch, _btnTickets, _btnPayments, _btnReports,
+                                  _btnStations, _btnRoutes, _btnSchedules, _btnTrains,
+                                  _btnCollapse, _btnTheme, _btnLogout };
+            foreach (var b in btnList)
             {
-                _sidebar.Width          = 64;
-                _btnCollapse.Text       = "▶";
-                _btnCollapse.Location   = new Point(18, 22);
-                HideButtonTexts();
+                b.Width = _sidebar.Width - 16;
+                b.Text  = _sidebarCollapsed ? b.Text.Split(' ')[1] : b.Text; // chỉ giữ icon
             }
-            else
-            {
-                _sidebar.Width          = 240;
-                _btnCollapse.Text       = "◀";
-                _btnCollapse.Location   = new Point(_sidebar.Width - 38, 22);
-                ShowButtonTexts();
-            }
+
+            _lblBrandName.Visible = !_sidebarCollapsed;
+            _lblBrandSub.Visible  = !_sidebarCollapsed;
+            _btnCollapse.Text     = _sidebarCollapsed ? "▶" : "  ◀  Thu gọn";
         }
 
-        private void FrmMain_Resize(object? sender, EventArgs e)
+        private void BtnLogout_Click(object? sender, EventArgs e)
         {
-            // WinForms Dock tự xử lý; chỉ cần cập nhật khi resize form con
-            foreach (Control c in _content.Controls)
-            {
-                c.Width  = _content.Width;
-                c.Height = _content.Height;
-            }
+            var result = MessageBox.Show("Bạn có chắc muốn đăng xuất?", "Xác nhận",
+                MessageBoxButtons.YesNo, MessageBoxIcon.Question);
+            if (result != DialogResult.Yes) return;
+
+            _notiTimer.Stop();
+            SessionManager.Clear();
+            Close();
         }
 
-        // ─── ROLE PERMISSIONS ────────────────────────────────────────
         private void ApplyRolePermission()
         {
-            var roles      = SessionManager.CurrentUser?.Roles ?? new List<string>();
-            bool isAdmin   = roles.Contains("Admin");
-            bool isStaff   = roles.Contains("Staff");
-            bool isManager = roles.Contains("Manager");
-            bool isCustomer= roles.Contains("User");
+            var isStaff = SessionManager.CurrentUser?.IsStaff ?? false;
+            var isAdmin = SessionManager.CurrentUser?.IsAdmin ?? false;
 
-            _btnSearch.Visible    = isAdmin || isStaff || isCustomer;
-            _btnTickets.Visible   = isAdmin || isStaff || isCustomer;
-            _btnPayments.Visible  = isAdmin || isStaff || isCustomer;
-            _btnReports.Visible   = isAdmin || isManager;
-            _btnTrains.Visible    = isAdmin;
+            _btnReports.Visible   = isStaff;
             _btnStations.Visible  = isAdmin;
             _btnRoutes.Visible    = isAdmin;
             _btnSchedules.Visible = isAdmin;
-            _btnTheme.Visible     = true;
-
-            // Sắp xếp lại vị trí Y cho các nút hiển thị
-            int y   = 86;
-            int gap = 52;
-            foreach (var btn in new[] { _btnSearch, _btnTickets, _btnPayments, _btnReports,
-                                        _btnTrains, _btnStations, _btnRoutes, _btnSchedules, _btnTheme })
-            {
-                if (btn.Visible) { btn.Top = y; y += gap; }
-            }
-
-            if (isCustomer) OpenSearchForm();
+            _btnTrains.Visible    = isAdmin;
         }
 
-        // ─── OPEN CHILD FORMS ────────────────────────────────────────
-        private void OpenChildForm(Form form)
+        private void ApplyThemeToAll()
         {
-            foreach (Control c in _content.Controls) c.Dispose();
-            _content.Controls.Clear();
-
-            form.TopLevel        = false;
-            form.FormBorderStyle = FormBorderStyle.None;
-            form.Dock            = DockStyle.Fill;
-            _content.Controls.Add(form);
-
-            if (form is IThemeableForm t) t.ApplyTheme();
-            form.Show();
-        }
-
-        private void OpenSearchForm()    => OpenChildForm(new frmSearch(_scheduleService, _ticketService, _dbContext));
-        private void OpenTicketsForm()   => OpenChildForm(new frmTickets(_ticketService, _dbContext));
-        private void OpenPaymentsForm()  => OpenChildForm(new frmTickets(_ticketService, _dbContext));
-        private void OpenReportsForm()   => OpenChildForm(new frmReports(_reportService));
-        private void OpenTrainsForm()    => OpenChildForm(new frmTrains(_catalogService));
-        private void OpenStationsForm()  => OpenChildForm(new frmStations(_catalogService));
-        private void OpenRoutesForm()    => OpenChildForm(new frmRoutes(_catalogService));
-        private void OpenSchedulesForm() => OpenChildForm(new frmSchedules(
-            Program.ServiceProvider.GetRequiredService<ICatalogService>()));
-
-        // ─── COLLAPSED SIDEBAR TEXT ──────────────────────────────────
-        private void HideButtonTexts()
-        {
-            _btnSearch.Text = "🔍"; _btnTickets.Text = "🎫"; _btnPayments.Text = "💳";
-            _btnReports.Text = "📊"; _btnTrains.Text = "🚂"; _btnStations.Text = "🏙️";
-            _btnRoutes.Text = "🛣️"; _btnSchedules.Text = "⏰"; _btnTheme.Text = "🎨";
-            foreach (var btn in new[] { _btnSearch, _btnTickets, _btnPayments, _btnReports,
-                                        _btnTrains, _btnStations, _btnRoutes, _btnSchedules, _btnTheme })
-            {
-                btn.Width       = 32;
-                btn.Left        = 16;
-                btn.TextAlign   = HorizontalAlignment.Center;
-            }
-            _brandPanel.Controls[0].Visible = true; // icon vẫn hiện
-            _lblBrandName.Visible = false;
-            _lblBrandSub.Visible  = false;
-            _brandPanel.Width     = 64;
-        }
-
-        private void ShowButtonTexts()
-        {
-            _btnSearch.Text = "🔍  Tìm chuyến";    _btnTickets.Text = "🎫  Quản lý vé";
-            _btnPayments.Text = "💳  Thanh toán";  _btnReports.Text = "📊  Báo cáo";
-            _btnTrains.Text = "🚂  Quản lý tàu";   _btnStations.Text = "🏙️  Quản lý ga";
-            _btnRoutes.Text = "🛣️  Quản lý tuyến"; _btnSchedules.Text = "⏰  Lịch trình";
-            _btnTheme.Text = "🎨  Giao diện";
-            foreach (var btn in new[] { _btnSearch, _btnTickets, _btnPayments, _btnReports,
-                                        _btnTrains, _btnStations, _btnRoutes, _btnSchedules, _btnTheme })
-            {
-                btn.Width     = 208;
-                btn.Left      = 16;
-                btn.TextAlign = HorizontalAlignment.Left;
-            }
-            _lblBrandName.Visible = true;
-            _lblBrandSub.Visible  = true;
-            _brandPanel.Width     = 240;
+            BackColor            = UiTheme.Background;
+            _sidebar.FillColor   = UiTheme.Sidebar;
+            _header.FillColor    = UiTheme.Surface;
+            _content.FillColor   = UiTheme.Background;
+            _lblWelcome.ForeColor    = UiTheme.TextPrimary;
+            _lblBreadcrumb.ForeColor = UiTheme.TextSecondary;
+            UiTheme.Save();
         }
     }
 }

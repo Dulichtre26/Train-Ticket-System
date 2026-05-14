@@ -11,5 +11,8 @@ namespace TrainTicket.Business.Interfaces
 
         // G?i SP l?y tr?ng thái gh? c?a m?t chuy?n.
         Task<List<SeatMapDto>> GetSeatMapAsync(int scheduleId);
+
+        // C?p nh?p tr?ng thái chuy?n
+        Task<bool> UpdateScheduleStatusAsync(int scheduleId, string status, int? delayMinutes = null);
     }
 }

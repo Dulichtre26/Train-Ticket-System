@@ -78,7 +78,7 @@ namespace TrainTicket.WinForms.Helpers
             }
         }
 
-        private static void Save()
+        public static void Save()
         {
             try
             {

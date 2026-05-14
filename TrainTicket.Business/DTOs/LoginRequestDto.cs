@@ -6,5 +6,7 @@ namespace TrainTicket.Business.DTOs
     {
         public string Email { get; set; } = string.Empty;
         public string Password { get; set; } = string.Empty;
+        public bool RememberMe { get; set; }   // [M?I]
+        public string? Region { get; set; }   // HQ / North / Central / South
     }
 }

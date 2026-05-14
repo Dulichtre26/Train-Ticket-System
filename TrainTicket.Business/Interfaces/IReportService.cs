@@ -8,5 +8,7 @@ namespace TrainTicket.Business.Interfaces
     {
         // L?y DataTable doanh thu d?a trên b? l?c ??u vào.
         Task<DataTable> GetRevenueReportAsync(ReportFilterDto filter);
+        Task<DataTable> GetTopRoutesAsync(int year, int topN = 5);   // [M?I]
+        Task<DataTable> GetDailySummaryAsync(DateTime date);         // [M?I]
     }
 }

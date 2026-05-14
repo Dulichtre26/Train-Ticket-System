@@ -1,11 +1,10 @@
-using System.Data;
+﻿using System.Data;
 using TrainTicket.Business.DTOs;
 using TrainTicket.Business.Interfaces;
 using TrainTicket.Data.ADO;
 
 namespace TrainTicket.Business.Services
 {
-    // Service truy v?n l?ch tr�nh/s? ?? gh? b?ng ADO.NET + stored procedures.
     public class ScheduleService : IScheduleService
     {
         private readonly AdoHelper _adoHelper;
@@ -17,7 +16,6 @@ namespace TrainTicket.Business.Services
 
         public async Task<DataTable> SearchSchedulesAsync(SearchScheduleDto request)
         {
-            // Map DTO -> tham s? SP tm chuy?n.
             var parameters = new Dictionary<string, object?>
             {
                 ["@GaDi"] = request.GaDi,
@@ -25,35 +23,47 @@ namespace TrainTicket.Business.Services
                 ["@NgayDi"] = request.NgayDi.Date
             };
 
-            // Th?c thi SP v tr? DataTable ?? bind tr?c ti?p DataGridView.
-            var result = await _adoHelper.ExecuteStoredProcedureAsync("sp_TimChuyenTau", parameters);
-            return result;
+            return await _adoHelper.ExecuteStoredProcedureAsync("sp_TimChuyenTau", parameters);
         }
 
         public async Task<List<SeatMapDto>> GetSeatMapAsync(int scheduleId)
         {
-            // Tham s? cho SP s? ?? gh?.
-            var parameters = new Dictionary<string, object?>
-            {
-                ["@ScheduleID"] = scheduleId
-            };
-
-            // ??c d? li?u t? DB.
+            var parameters = new Dictionary<string, object?> { ["@ScheduleID"] = scheduleId };
             var table = await _adoHelper.ExecuteStoredProcedureAsync("sp_XemSoDoGhe", parameters);
 
-            // Map t?ng DataRow thnh DTO m?nh ki?u ?? Form d? s? d?ng.
+            // CẢI TIẾN: Sử dụng row.Field<T> để xử lý DBNull an toàn cho các trường chuỗi và số
             var result = table.Rows.Cast<DataRow>().Select(row => new SeatMapDto
             {
-                MaToa = row["MaToa"]?.ToString() ?? string.Empty,
-                LoaiToa = row["LoaiToa"]?.ToString() ?? string.Empty,
-                SoGhe = row["SoGhe"]?.ToString() ?? string.Empty,
-                LoaiGhe = row["LoaiGhe"]?.ToString() ?? string.Empty,
+                // Sử dụng toán tử ?? để gán chuỗi rỗng nếu giá trị trong DB là null
+                MaToa = row.Field<string>("MaToa") ?? string.Empty,
+                LoaiToa = row.Field<string>("LoaiToa") ?? string.Empty,
+                SoGhe = row.Field<string>("SoGhe") ?? string.Empty,
+                LoaiGhe = row.Field<string>("LoaiGhe") ?? string.Empty,
+                HangGhe = row.Field<string>("HangGhe") ?? "Economy",
+
+                // Kiểm tra DBNull trước khi chuyển đổi kiểu dữ liệu Boolean và Int
+                HasSocket = row["CoO_Cam"] != DBNull.Value && Convert.ToBoolean(row["CoO_Cam"]),
                 SeatID = row["SeatID"] == DBNull.Value ? 0 : Convert.ToInt32(row["SeatID"]),
-                TrangThai = row["TrangThai"]?.ToString() ?? string.Empty,
+                TrangThai = row.Field<string>("TrangThai") ?? string.Empty,
                 GiaVe = row["GiaVe"] == DBNull.Value ? 0 : Convert.ToDecimal(row["GiaVe"])
             }).ToList();
 
             return result;
+        }
+
+        public async Task<bool> UpdateScheduleStatusAsync(int scheduleId, string status, int? delayMinutes = null)
+        {
+            var parameters = new Dictionary<string, object?>
+            {
+                ["@ScheduleID"] = scheduleId,
+                ["@Status"] = status,
+                ["@DelayMinutes"] = (object?)delayMinutes ?? DBNull.Value
+            };
+
+            await _adoHelper.ExecuteNonQueryAsync(
+                "UPDATE Schedules SET Status=@Status, DelayMinutes=ISNULL(@DelayMinutes,DelayMinutes) WHERE ScheduleID=@ScheduleID", parameters);
+
+            return true;
         }
     }
 }

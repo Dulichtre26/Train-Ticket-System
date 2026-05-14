@@ -1,66 +1,46 @@
+using Microsoft.EntityFrameworkCore;
 using TrainTicket.Business.DTOs;
 using TrainTicket.Business.Interfaces;
 using TrainTicket.Data.DbContexts;
-using TrainTicket.Data.Entities;
-using Microsoft.EntityFrameworkCore;
 
 namespace TrainTicket.Business.Services
 {
     public class NotificationService : INotificationService
     {
-        private readonly TrainTicketDbContext _context;
+        private readonly TrainTicketDbContext _db;
 
-        public NotificationService(TrainTicketDbContext context)
-        {
-            _context = context;
-        }
+        public NotificationService(TrainTicketDbContext db) => _db = db;
 
-        public async Task<IEnumerable<NotificationDto>> GetUserNotificationsAsync(int userId)
-        {
-            var notifications = await _context.Notifications
-                .Where(n => n.UserID == userId)
+        public async Task<List<NotificationDto>> GetUnreadAsync(int userId) =>
+            await _db.Notifications
+                .Where(n => n.UserID == userId && !n.IsRead)
                 .OrderByDescending(n => n.CreatedAt)
-                .ToListAsync();
+                .Take(50)
+                .Select(n => new NotificationDto
+                {
+                    NotiID    = n.NotiID,
+                    Title     = n.Title,
+                    Body      = n.Body,
+                    Type      = n.Type,
+                    IsRead    = n.IsRead,
+                    CreatedAt = n.CreatedAt,
+                    RelatedID = n.RelatedID
+                }).ToListAsync();
 
-            return notifications.Select(n => new NotificationDto
-            {
-                NotiID = n.NotiID,
-                UserID = n.UserID,
-                Title = n.Title,
-                Body = n.Body,
-                Type = n.Type,
-                IsRead = n.IsRead,
-                RelatedID = n.RelatedID,
-                CreatedAt = n.CreatedAt
-            });
+        public async Task<int> GetUnreadCountAsync(int userId) =>
+            await _db.Notifications.CountAsync(n => n.UserID == userId && !n.IsRead);
+
+        public async Task MarkReadAsync(int notiId)
+        {
+            var n = await _db.Notifications.FindAsync(notiId);
+            if (n != null) { n.IsRead = true; await _db.SaveChangesAsync(); }
         }
 
-        public async Task<bool> MarkAsReadAsync(int notiId, int userId)
+        public async Task MarkAllReadAsync(int userId)
         {
-            var notification = await _context.Notifications
-                .FirstOrDefaultAsync(n => n.NotiID == notiId && n.UserID == userId);
-
-            if (notification == null) return false;
-
-            notification.IsRead = true;
-            await _context.SaveChangesAsync();
-            return true;
-        }
-
-        public async Task<bool> SendNotificationAsync(int userId, string title, string body, string type = "Info", int? relatedId = null)
-        {
-            var notification = new Notification
-            {
-                UserID = userId,
-                Title = title,
-                Body = body,
-                Type = type,
-                RelatedID = relatedId
-            };
-
-            _context.Notifications.Add(notification);
-            await _context.SaveChangesAsync();
-            return true;
+            await _db.Notifications
+                .Where(n => n.UserID == userId && !n.IsRead)
+                .ExecuteUpdateAsync(s => s.SetProperty(n => n.IsRead, true));
         }
     }
 }

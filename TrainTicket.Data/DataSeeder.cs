@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Linq;
 using Microsoft.EntityFrameworkCore;
 using TrainTicket.Data.Entities;
@@ -11,66 +11,188 @@ namespace TrainTicket.Data.DbContexts
     {
         public static void Initialize(TrainTicketDbContext context)
         {
+            // Đảm bảo Database đã được tạo
             context.Database.EnsureCreated();
 
-            if (context.Stations.Any()) return; 
+            // 1. Tạo Stored Procedures và Functions (Quan trọng để đồng bộ logic Business)
+            SeedStoreProcedures(context);
 
-            var stationHanoi = new Station { StationCode = "HAN", StationName = "H� N?i", City = "H� N?i", IsActive = true, RegionCode = "HQ" };
-            var stationSG = new Station { StationCode = "SGN", StationName = "S�i G�n", City = "TP.HCM", IsActive = true, RegionCode = "HQ" };
-            var stationDN = new Station { StationCode = "DAD", StationName = "?� N?ng", City = "?� N?ng", IsActive = true, RegionCode = "HQ" };
+            try
+            {
+                // 2. Tạo Roles nếu chưa có
+                if (!context.Roles.Any())
+                {
+                    var roleAdmin = new Role { RoleName = "Admin", Description = "Administrator" };
+                    var roleUser = new Role { RoleName = "User", Description = "Customer" };
+                    var roleStaff = new Role { RoleName = "Staff", Description = "Staff" };
+                    context.Roles.AddRange(roleAdmin, roleUser, roleStaff);
+                    context.SaveChanges();
+                }
 
-            context.Stations.AddRange(stationHanoi, stationSG, stationDN);
+                // 3. Tạo Users mẫu nếu chưa có
+                if (!context.Users.Any())
+                {
+                    var roleAdmin = context.Roles.FirstOrDefault(r => r.RoleName == "Admin");
+                    var roleUser = context.Roles.FirstOrDefault(r => r.RoleName == "User");
 
-            var train1 = new Train { TrainCode = "SE1", TrainName = "T�u Kh�ch B?c Nam SE1", TrainType = "Nhanh", IsActive = true, RegionCode = "HQ" };
-            var train2 = new Train { TrainCode = "SE2", TrainName = "T�u Kh�ch Nam B?c SE2", TrainType = "Nhanh", IsActive = true, RegionCode = "HQ" };
+                    // Tài khoản Admin: Admin@123
+                    var adminUser = new User
+                    {
+                        Email = "admin@trainticket.vn",
+                        PasswordHash = BCrypt.Net.BCrypt.HashPassword("Admin@123"),
+                        FullName = "Quản Trị Viên",
+                        PhoneNumber = "0123456789",
+                        IsActive = true,
+                        RegionCode = "HQ",
+                        CreatedAt = DateTime.Now,
+                        UpdatedAt = DateTime.Now
+                    };
 
-            context.Trains.AddRange(train1, train2);
-            context.SaveChanges();
+                    // Tài khoản Khách hàng: 123456
+                    var customerUser = new User
+                    {
+                        Email = "kh@trainticket.vn",
+                        PasswordHash = BCrypt.Net.BCrypt.HashPassword("123456"),
+                        FullName = "Khách Hàng Mẫu",
+                        PhoneNumber = "0987654321",
+                        IsActive = true,
+                        RegionCode = "HQ",
+                        CreatedAt = DateTime.Now,
+                        UpdatedAt = DateTime.Now
+                    };
 
-            var route1 = new Route { RouteName = "H� N?i - S�i G�n", DepartureStation = stationHanoi.StationID, ArrivalStation = stationSG.StationID, Distance = 1726, RegionCode = "HQ" };
-            var route2 = new Route { RouteName = "S�i G�n - H� N?i", DepartureStation = stationSG.StationID, ArrivalStation = stationHanoi.StationID, Distance = 1726, RegionCode = "HQ" };
-            
-            context.Routes.AddRange(route1, route2);
-            context.SaveChanges();
+                    context.Users.AddRange(adminUser, customerUser);
+                    context.SaveChanges();
 
-            var carriage1 = new Carriage { TrainID = train1.TrainID, CarriageCode = "C1", CarriageType = "VIP", TotalSeats = 2, IsActive = true, RegionCode = "HQ" };
-            context.Carriages.Add(carriage1);
-            context.SaveChanges();
+                    // Gán quyền
+                    if (roleAdmin != null)
+                        context.UserRoles.Add(new UserRole { UserID = adminUser.UserID, RoleID = roleAdmin.RoleID });
+                    if (roleUser != null)
+                        context.UserRoles.Add(new UserRole { UserID = customerUser.UserID, RoleID = roleUser.RoleID });
 
-            var seat1 = new Seat { CarriageID = carriage1.CarriageID, SeatNumber = "1A", SeatType = "Ng?i M?m", IsActive = true, RegionCode = "HQ" };
-            var seat2 = new Seat { CarriageID = carriage1.CarriageID, SeatNumber = "1B", SeatType = "Ng?i M?m", IsActive = true, RegionCode = "HQ" };
-            context.Seats.AddRange(seat1, seat2);
-            context.SaveChanges();
+                    context.SaveChanges();
+                }
 
-            var schedule1 = new Schedule { TrainID = train1.TrainID, RouteID = route1.RouteID, DepartureTime = DateTime.Now.AddDays(1), ArrivalTime = DateTime.Now.AddDays(2), Status = "Scheduled", RegionCode = "HQ" };
-            context.Schedules.Add(schedule1);
-            context.SaveChanges();
+                // Nếu đã có Stations từ SQL file thì không nạp thêm dữ liệu mẫu bằng C# để tránh trùng lặp
+                if (context.Stations.Any()) return;
 
-            var schedulePrice = new SchedulePrice { ScheduleID = schedule1.ScheduleID, SeatType = "Ng?i M?m", Price = 1200000, RegionCode = "HQ" };
-            context.SchedulePrices.Add(schedulePrice);
-            context.SaveChanges();
-            
-            var roleAdmin = new Role { RoleName = "Admin", Description = "Administrator" };
-            var roleUser = new Role { RoleName = "User", Description = "Customer" };
-            context.Roles.AddRange(roleAdmin, roleUser);
-            context.SaveChanges();
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine("=== SEEDER EXCEPTION ===");
+                System.Diagnostics.Debug.WriteLine(ex.Message);
+                throw;
+            }
+        }
 
-            var adminUser = new User { Email = "admin@trainticket.vn", PasswordHash = BCrypt.Net.BCrypt.HashPassword("Admin@123"), FullName = "Admin", PhoneNumber = "0123456789", IsActive = true, RegionCode = "HQ" };
-            var customerUser = new User { Email = "kh@trainticket.vn", PasswordHash = BCrypt.Net.BCrypt.HashPassword("123456"), FullName = "Kh�ch H�ng 1", PhoneNumber = "0987654321", IsActive = true, RegionCode = "HQ" };
-            context.Users.AddRange(adminUser, customerUser);
-            context.SaveChanges();
+        private static void SeedStoreProcedures(TrainTicketDbContext context)
+        {
+            // SP Lấy danh sách vé (Đồng bộ với TicketHistoryDto)
+            var spLayDanhSachVe = @"
+CREATE OR ALTER PROCEDURE sp_LayDanhSachVe
+    @UserID INT = NULL,
+    @Status NVARCHAR(20) = NULL,
+    @TuNgay DATE = NULL,
+    @DenNgay DATE = NULL,
+    @MaVe NVARCHAR(20) = NULL
+AS
+BEGIN
+    SELECT t.TicketID, t.TicketCode, t.Status, t.PassengerName, t.PassengerID,
+           t.SeatType, t.FinalPrice, t.BookedAt, t.CancelledAt,
+           sch.DepartureTime AS GioDi, sch.ArrivalTime AS GioDen,
+           tr.TrainCode AS MaTau, dep.StationName AS GaDi, arr.StationName AS GaDen,
+           c.CarriageCode AS MaToa, s.SeatNumber AS SoGhe, u.FullName AS NguoiDat
+    FROM Tickets t
+    JOIN Users u ON t.UserID = u.UserID
+    JOIN Schedules sch ON t.ScheduleID = sch.ScheduleID
+    JOIN Trains tr ON sch.TrainID = tr.TrainID
+    JOIN Routes r ON sch.RouteID = r.RouteID
+    JOIN Stations dep ON r.DepartureStation = dep.StationID
+    JOIN Stations arr ON r.ArrivalStation = arr.StationID
+    JOIN Seats s ON t.SeatID = s.SeatID
+    JOIN Carriages c ON s.CarriageID = c.CarriageID
+    WHERE (@UserID IS NULL OR t.UserID = @UserID)
+      AND (@Status IS NULL OR t.Status = @Status)
+      AND (@TuNgay IS NULL OR CAST(t.BookedAt AS DATE) >= @TuNgay)
+      AND (@DenNgay IS NULL OR CAST(t.BookedAt AS DATE) <= @DenNgay)
+      AND (@MaVe IS NULL OR t.TicketCode LIKE '%' + @MaVe + '%')
+    ORDER BY t.BookedAt DESC;
+END";
 
-            context.UserRoles.Add(new UserRole { UserID = adminUser.UserID, RoleID = roleAdmin.RoleID });
-            context.UserRoles.Add(new UserRole { UserID = customerUser.UserID, RoleID = roleUser.RoleID });
-            context.SaveChanges();
+            var spCheckIn = @"
+CREATE OR ALTER PROCEDURE sp_CheckIn
+    @TicketCode NVARCHAR(20)
+AS
+BEGIN
+    UPDATE Tickets SET CheckedIn = 1, CheckInAt = GETDATE(), Status = 'Used' 
+    WHERE TicketCode = @TicketCode AND Status = 'Confirmed';
+    SELECT @@ROWCOUNT AS Result;
+END";
 
-            var ticket = new Ticket { TicketCode = "TCK123456", UserID = customerUser.UserID, ScheduleID = schedule1.ScheduleID, SeatID = seat1.SeatID, PassengerName = "Kh�ch H�ng 1", PassengerID = "123456789", PassengerPhone = "0987654321", SeatType = "Ng?i M?m", OriginalPrice = 1200000, FinalPrice = 1200000, Status = "Paid", BookedAt = DateTime.Now, RegionCode = "HQ" };
-            context.Tickets.Add(ticket);
-            context.SaveChanges();
+            // Function tính giá vé (Sửa tên cột khớp với Entity Discount và SQL Table)
+            var fnTinhGiaVe = @"
+CREATE OR ALTER FUNCTION fn_TinhGiaVe(@BasePrice DECIMAL(12,0), @DiscountCode NVARCHAR(20))
+RETURNS DECIMAL(12,0)
+AS
+BEGIN
+    DECLARE @FinalPrice DECIMAL(12,0) = @BasePrice;
+    DECLARE @Amount DECIMAL(12,0) = 0;
+    DECLARE @Type NVARCHAR(20);
 
-            var payment = new Payment { TicketID = ticket.TicketID, PaymentMethod = "Cash", Amount = 1200000, PaidAt = DateTime.Now, Status = "Completed" };
-            context.Payments.Add(payment);
-            context.SaveChanges();
+    SELECT @Amount = Amount, @Type = DiscountType
+    FROM Discounts 
+    WHERE Code = @DiscountCode AND IsActive = 1 
+      AND GETDATE() BETWEEN ValidFrom AND ValidTo;
+
+    IF @Type = 'Percent'
+        SET @FinalPrice = @BasePrice - (@BasePrice * @Amount / 100);
+    ELSE IF @Type = 'Fixed'
+        SET @FinalPrice = @BasePrice - @Amount;
+
+    IF @FinalPrice < 0 SET @FinalPrice = 0;
+    RETURN @FinalPrice;
+END";
+
+            var alterUsers = @"
+IF NOT EXISTS (SELECT * FROM sys.columns WHERE object_id = OBJECT_ID(N'[dbo].[Users]') AND name = 'RegionCode')
+BEGIN
+    ALTER TABLE [dbo].[Users] ADD [RegionCode] NVARCHAR(20) DEFAULT 'HQ' WITH VALUES;
+END";
+
+            // SP Báo cáo doanh thu (Sửa trạng thái lọc từ Paid thành Confirmed)
+            var spBaoCaoDoanhThu = @"
+CREATE OR ALTER PROCEDURE sp_BaoCaoDoanhThu
+    @Nam INT,
+    @Thang INT = NULL,
+    @RouteID INT = NULL
+AS
+BEGIN
+    SELECT MONTH(t.BookedAt) AS Thang, 
+           COUNT(t.TicketID) AS SoVeBan, 
+           SUM(t.FinalPrice) AS TongDoanhThu
+    FROM Tickets t
+    JOIN Schedules sch ON t.ScheduleID = sch.ScheduleID
+    WHERE YEAR(t.BookedAt) = @Nam
+      AND (@Thang IS NULL OR MONTH(t.BookedAt) = @Thang)
+      AND (@RouteID IS NULL OR sch.RouteID = @RouteID)
+      AND t.Status IN ('Confirmed', 'Used')
+    GROUP BY MONTH(t.BookedAt)
+    ORDER BY MONTH(t.BookedAt);
+END";
+
+            try
+            {
+                // Thực thi SQL Raw để tạo object trong DB
+                context.Database.ExecuteSqlRaw(spLayDanhSachVe);
+                context.Database.ExecuteSqlRaw(spCheckIn);
+                context.Database.ExecuteSqlRaw(fnTinhGiaVe);
+                context.Database.ExecuteSqlRaw(alterUsers);
+                context.Database.ExecuteSqlRaw(spBaoCaoDoanhThu);
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine("Error seeding SPs: " + ex.Message);
+            }
         }
     }
 }

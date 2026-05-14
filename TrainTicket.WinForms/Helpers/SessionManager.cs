@@ -16,14 +16,20 @@ namespace TrainTicket.WinForms.Helpers
 
         public static bool IsLoggedIn => CurrentUser is not null;
 
-        public static void SetSession(UserSessionDto user)
+        // [M?I] Timeout: session quá 8h thì coi nh? h?t h?n
+        public static bool IsSessionExpired =>
+            CurrentUser != null && (DateTime.Now - CurrentUser.LoginAt).TotalHours > 8;
+
+        public static void SetSession(UserSessionDto user, string? region = null)
         {
-            CurrentUser = user;
+            CurrentUser   = user;
+            CurrentRegion = region ?? RegionHelper.HQ;
         }
 
         public static void Clear()
         {
-            CurrentUser = null;
+            CurrentUser   = null;
+            CurrentRegion = RegionHelper.HQ;
         }
     }
 }

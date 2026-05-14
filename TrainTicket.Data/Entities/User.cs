@@ -34,6 +34,11 @@ namespace TrainTicket.Data.Entities
         public DateTime CreatedAt { get; set; } = DateTime.Now;
         public DateTime UpdatedAt { get; set; } = DateTime.Now;
 
+        // Authentication fields
+        public int FailedLoginCount { get; set; } = 0;
+        public DateTime? LockoutUntil { get; set; }
+        public DateTime? LastLoginAt { get; set; }
+
         [MaxLength(20)]
         public string RegionCode { get; set; } = "HQ";
 

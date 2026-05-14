@@ -10,114 +10,137 @@ namespace TrainTicket.Business.Services
     // Service ??ng nh?p: dùng EF ?? l?y user/role và BCrypt ?? ki?m tra m?t kh?u.
     public class AuthService : IAuthService
     {
+        private const int MaxFailedAttempts = 5;
+        private const int LockoutMinutes    = 30;
         private readonly TrainTicketDbContext _context;
 
-        public AuthService(TrainTicketDbContext context)
-        {
-            _context = context;
-        }
+        public AuthService(TrainTicketDbContext context) => _context = context;
 
         public async Task<UserSessionDto?> LoginAsync(LoginRequestDto request)
         {
-            // 1) Tìm user theo email và b? qua tài kho?n ?ã soft-delete.
             var user = await _context.Users
-                .Include(x => x.UserRoles)
-                .ThenInclude(x => x.Role)
+                .Include(x => x.UserRoles).ThenInclude(x => x.Role)
                 .FirstOrDefaultAsync(x => x.Email == request.Email && !x.IsDeleted);
 
-            // 2) User không t?n t?i ho?c b? khóa -> ??ng nh?p th?t b?i.
-            if (user == null || !user.IsActive)
+            if (user == null) return null;
+
+            // Ki?m tra tài kho?n b? khóa t?m th?i
+            if (user.LockoutUntil.HasValue && user.LockoutUntil > DateTime.UtcNow)
             {
+                var remaining = (user.LockoutUntil.Value - DateTime.UtcNow).TotalMinutes;
+                throw new InvalidOperationException(
+                    $"Tài kho?n b? khóa. Th? l?i sau {remaining:F0} phút.");
+            }
+
+            if (!user.IsActive)
+                throw new InvalidOperationException("Tài kho?n ?ã b? vô hi?u hóa.");
+
+            var isValid = VerifyPassword(request.Password, user.PasswordHash);
+
+            if (!isValid)
+            {
+                // T?ng ??m th?t b?i, khóa n?u quá gi?i h?n
+                user.FailedLoginCount++;
+                if (user.FailedLoginCount >= MaxFailedAttempts)
+                {
+                    user.LockoutUntil = DateTime.UtcNow.AddMinutes(LockoutMinutes);
+                    user.FailedLoginCount = 0;
+                }
+                await _context.SaveChangesAsync();
                 return null;
             }
 
-            // 3) So kh?p m?t kh?u theo ??nh d?ng ?ang l?u trong DB.
-            var isValidPassword = VerifyPassword(request.Password, user.PasswordHash);
-            if (!isValidPassword)
-            {
-                return null;
-            }
+            // ??ng nh?p thành công — reset lockout
+            user.FailedLoginCount = 0;
+            user.LockoutUntil     = null;
+            user.LastLoginAt      = DateTime.UtcNow;
+            user.UpdatedAt        = DateTime.Now;
+            await _context.SaveChangesAsync();
 
-            // 4) Tr? session DTO ?? UI l?u vào SessionManager.
             return new UserSessionDto
             {
-                UserID = user.UserID,
+                UserID   = user.UserID,
                 FullName = user.FullName,
-                Email = user.Email,
+                Email    = user.Email,
                 IsActive = user.IsActive,
-                Roles = user.UserRoles.Select(ur => ur.Role.RoleName).Distinct().ToList()
+                LoginAt  = DateTime.Now,
+                Roles    = user.UserRoles.Select(ur => ur.Role.RoleName).Distinct().ToList()
             };
         }
 
-        private static bool VerifyPassword(string inputPassword, string? storedHash)
+        public async Task<bool> ChangePasswordAsync(int userId, string oldPassword, string newPassword)
         {
-            if (string.IsNullOrWhiteSpace(inputPassword) || string.IsNullOrWhiteSpace(storedHash))
-            {
-                return false;
-            }
+            var user = await _context.Users.FindAsync(userId);
+            if (user == null) return false;
 
-            // D? li?u seed hi?n t?i dùng format: hash_<plainPassword>
-            const string legacyPrefix = "hash_";
-            if (storedHash.StartsWith(legacyPrefix, true, CultureInfo.InvariantCulture))
-            {
-                var plainPassword = storedHash.Substring(legacyPrefix.Length);
-                return string.Equals(inputPassword, plainPassword, StringComparison.Ordinal);
-            }
+            if (!VerifyPassword(oldPassword, user.PasswordHash))
+                throw new InvalidOperationException("M?t kh?u c? không ?úng.");
 
-            // Ch? verify BCrypt khi hash ??ng format BCrypt ?? tránh l?i Invalid salt version.
-            if (storedHash.StartsWith("$2", StringComparison.Ordinal))
-            {
-                try
-                {
-                    return BCrypt.Net.BCrypt.Verify(inputPassword, storedHash);
-                }
-                catch
-                {
-                    return false;
-                }
-            }
+            user.PasswordHash = BCrypt.Net.BCrypt.HashPassword(newPassword, workFactor: 11);
+            user.UpdatedAt    = DateTime.Now;
+            await _context.SaveChangesAsync();
+            return true;
+        }
 
-            // Fallback cho d? li?u legacy l?u plain text.
-            return string.Equals(inputPassword, storedHash, StringComparison.Ordinal);
+        public async Task<bool> UnlockAccountAsync(int userId)
+        {
+            var user = await _context.Users.FindAsync(userId);
+            if (user == null) return false;
+
+            user.LockoutUntil     = null;
+            user.FailedLoginCount = 0;
+            user.IsActive         = true;
+            user.UpdatedAt        = DateTime.Now;
+            await _context.SaveChangesAsync();
+            return true;
         }
 
         public async Task<bool> RegisterAsync(RegisterRequestDto request)
         {
-            // 1) Ki?m tra email ?? ??ng k? ch?a.
-            var existingUser = await _context.Users
-                .FirstOrDefaultAsync(x => x.Email == request.Email && !x.IsDeleted);
+            // Ki?m tra email ?ã t?n t?i
+            var existing = await _context.Users.FirstOrDefaultAsync(u => u.Email == request.Email);
+            if (existing != null) return false;
 
-            if (existingUser != null)
-            {
-                return false; // Email ?? t?n t?i
-            }
-
-            // 2) Hash m?t kh?u b?ng BCrypt
-            var passwordHash = BCrypt.Net.BCrypt.HashPassword(request.Password);
-
-            // 3) T?o user m?i
-            var newUser = new User
+            var user = new User
             {
                 FullName = request.FullName,
-                Email = request.Email,
+                Email    = request.Email,
                 PhoneNumber = request.PhoneNumber,
-                PasswordHash = passwordHash,
-                IsActive = true,
-                RegionCode = "HQ" // Ho?c l?y t? context
+                PasswordHash = BCrypt.Net.BCrypt.HashPassword(request.Password),
+                IsActive     = true,
+                RegionCode   = "HQ"
             };
-
-            _context.Users.Add(newUser);
+            _context.Users.Add(user);
             await _context.SaveChangesAsync();
 
-            // 4) G?n role "User" m?c ??nh
-            var userRole = await _context.Roles.FirstOrDefaultAsync(r => r.RoleName == "User");
-            if (userRole != null)
+            // Gán role User
+            var role = await _context.Roles.FirstOrDefaultAsync(r => r.RoleName == "User");
+            if (role != null)
             {
-                _context.UserRoles.Add(new UserRole { UserID = newUser.UserID, RoleID = userRole.RoleID });
+                _context.UserRoles.Add(new UserRole { UserID = user.UserID, RoleID = role.RoleID });
                 await _context.SaveChangesAsync();
             }
-
             return true;
+        }
+
+        private static bool VerifyPassword(string input, string? stored)
+        {
+            if (string.IsNullOrWhiteSpace(input) || string.IsNullOrWhiteSpace(stored))
+                return false;
+
+            // Legacy seed data: "hash_<plain>"
+            const string legacy = "hash_";
+            if (stored.StartsWith(legacy, true, CultureInfo.InvariantCulture))
+                return string.Equals(input, stored[legacy.Length..], StringComparison.Ordinal);
+
+            // BCrypt
+            if (stored.StartsWith("$2", StringComparison.Ordinal))
+            {
+                try { return BCrypt.Net.BCrypt.Verify(input, stored); }
+                catch { return false; }
+            }
+
+            return string.Equals(input, stored, StringComparison.Ordinal);
         }
     }
 }

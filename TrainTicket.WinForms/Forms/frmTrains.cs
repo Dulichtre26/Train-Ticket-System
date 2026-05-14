@@ -224,6 +224,29 @@ namespace TrainTicket.WinForms.Forms
             _btnCancel.Font                 = new Font("Segoe UI", 9, FontStyle.Bold);
             _btnCancel.Click               += (_, _) => HideRightPanel();
 
+            _rightPanel.Controls.Add(_btnSave);
+            _rightPanel.Controls.Add(_btnDelete);
+            _rightPanel.Controls.Add(_btnCancel);
+
+            // ?? MAIN PANEL (Grid) ???????????????????????????????????????
+            _mainPanel.Dock      = DockStyle.Fill;
+            _mainPanel.Padding   = new Padding(20);
+            _mainPanel.BackColor = Color.Transparent;
+
+            _grid.Dock                     = DockStyle.Fill;
+            _grid.ReadOnly                 = true;
+            _grid.AllowUserToAddRows       = false;
+            _grid.SelectionMode            = DataGridViewSelectionMode.FullRowSelect;
+            _grid.AutoSizeColumnsMode      = DataGridViewAutoSizeColumnsMode.Fill;
+            _grid.CellDoubleClick         += Grid_CellDoubleClick;
+
+            _mainPanel.Controls.Add(_grid);
+
+            Controls.Add(_mainPanel);
+            Controls.Add(_rightPanel);
+            Controls.Add(middleContainer);
+            Controls.Add(_topPanel);
+
             _loadingOverlay = new LoadingOverlay(this);
             ApplyTheme();
         }

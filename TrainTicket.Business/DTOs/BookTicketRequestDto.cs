@@ -11,6 +11,7 @@ namespace TrainTicket.Business.DTOs
         public string PassengerID { get; set; } = string.Empty;
         public string? PassengerPhone { get; set; }
         public string SeatType { get; set; } = string.Empty;
-        public string PaymentMethod { get; set; } = string.Empty;
+        public string PaymentMethod { get; set; } = "Cash";
+        public string? DiscountCode { get; set; }   // [M?I]
     }
 }

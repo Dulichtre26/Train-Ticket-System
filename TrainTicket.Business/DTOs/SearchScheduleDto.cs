@@ -7,5 +7,7 @@ namespace TrainTicket.Business.DTOs
         public int GaDi { get; set; }
         public int GaDen { get; set; }
         public DateTime NgayDi { get; set; }
+        public string? SeatType { get; set; } // [M?I] filter lo?i gh?
+        public decimal? MaxPrice { get; set; } // [M?I] filter giá t?i ?a
     }
 }

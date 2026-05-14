@@ -10,5 +10,11 @@ namespace TrainTicket.Business.Interfaces
 
         // ??ng k? t?i kho?n m?i.
         Task<bool> RegisterAsync(RegisterRequestDto request);
+
+        // ??i m?t kh?u
+        Task<bool> ChangePasswordAsync(int userId, string oldPassword, string newPassword);
+
+        // M? khóa tài kho?n (Admin)
+        Task<bool> UnlockAccountAsync(int userId);
     }
 }
