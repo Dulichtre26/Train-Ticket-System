@@ -1,9 +1,9 @@
-// ============================================================
-// FILE: TrainTicket.Data/ADO/ConnectionHelper.cs � N�NG C?P
-// C?i ti?n:
-//   - ??c connection string t? appsettings.json n?u c�
-//   - H? tr? connection string v?i server/database t�y ch?nh
-//   - Th�m helper BuildConnectionString
+﻿// ============================================================
+// FILE: TrainTicket.Data/ADO/ConnectionHelper.cs — NANG CAP
+// Cai tien:
+//   - Doc connection string tu appsettings.json neu co
+//   - Ho tro connection string voi server/database tuy chinh
+//   - Them helper BuildConnectionString
 // ============================================================
 using System.Text.Json;
 
@@ -13,7 +13,7 @@ namespace TrainTicket.Data.ADO
     {
         private static string _current = DefaultConnection;
 
-        // Connection strings m?c ??nh
+        // Connection strings mac dinh
         public static string DefaultConnection =>
             BuildConnectionString("localhost", "TrainTicketDB");
 
@@ -26,14 +26,14 @@ namespace TrainTicket.Data.ADO
         public static string SouthConnection =>
             BuildConnectionString("localhost", "TrainTicketDB_South");
 
-        /// <summary>Connection string ?ang ???c ch?n (c� th? thay ??i runtime)</summary>
+        /// <summary>Connection string đang được chọn (có thể thay đổ  i runtime)</summary>
         public static string CurrentConnectionString
         {
             get => _current;
             set => _current = value;
         }
 
-        /// <summary>T?o connection string chu?n t? server + database</summary>
+        /// <summary>Tạo connection string chuẩn từ server + database</summary>
         public static string BuildConnectionString(string server, string database,
             string? user = null, string? password = null)
         {
@@ -45,7 +45,7 @@ namespace TrainTicket.Data.ADO
                    "Trusted_Connection=True;TrustServerCertificate=True;";
         }
 
-        /// <summary>Load connection string t? file config n?u t?n t?i</summary>
+        /// <summary>Load connection string tu file config neu ton tai</summary>
         public static void LoadFromConfig(string configPath = "appsettings.json")
         {
             try
@@ -60,10 +60,10 @@ namespace TrainTicket.Data.ADO
                 if (!string.IsNullOrEmpty(conn))
                     _current = conn;
             }
-            catch { /* Gi? nguy�n default n?u l?i */ }
+            catch { /* Giữ nguyên default nếu lỗi */ }
         }
 
-        /// <summary>Validate connection string hi?n t?i</summary>
+        /// <summary>Validate connection string hiện tại</summary>
         public static bool IsValid()
         {
             try

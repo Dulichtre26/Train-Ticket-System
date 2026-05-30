@@ -1,20 +1,20 @@
-using TrainTicket.Business.DTOs;
+﻿using TrainTicket.Business.DTOs;
 
 namespace TrainTicket.Business.Interfaces
 {
-    // Service nghi?p v? x�c th?c ng??i d�ng.
+    // Service nghi?p v? xác th?c ng??i dùng.
     public interface IAuthService
     {
-        // Tr? v? th�ng tin phi�n ??ng nh?p n?u h?p l?; ng??c l?i tr? null.
+        // Trả về thông tin phiên đăg nhập nếu hợp lý; ngc lại trả null. Trả về thông tin phiên đăg nhập nếu khó null.
         Task<UserSessionDto?> LoginAsync(LoginRequestDto request);
 
-        // ??ng k? t?i kho?n m?i.
+        // đăng ký tài khoản mới.
         Task<bool> RegisterAsync(RegisterRequestDto request);
 
         // ??i m?t kh?u
         Task<bool> ChangePasswordAsync(int userId, string oldPassword, string newPassword);
 
-        // M? kh�a t�i kho?n (Admin)
+        // Mã khóa tài khoản (Admin)
         Task<bool> UnlockAccountAsync(int userId);
     }
 }

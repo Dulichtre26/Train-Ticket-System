@@ -1,19 +1,19 @@
-using System.ComponentModel.DataAnnotations;
-using System.ComponentModel.DataAnnotations.Schema;
+﻿using System;
+using System.Collections.Generic;
 
-namespace TrainTicket.Data.Entities
+namespace TrainTicket.Data.Entities;
+
+public partial class UserRole
 {
-    [Table("UserRoles")]
-    public class UserRole
-    {
-        [Key]
-        public int UserRoleID { get; set; }
-        public int UserID { get; set; }
-        public int RoleID { get; set; }
-        public DateTime AssignedAt { get; set; } = DateTime.Now;
+    public int UserRoleId { get; set; }
 
-        // Navigation
-        public User User { get; set; } = null!;
-        public Role Role { get; set; } = null!;
-    }
+    public int UserId { get; set; }
+
+    public int RoleId { get; set; }
+
+    public DateTime? AssignedAt { get; set; }
+
+    public virtual Role Role { get; set; } = null!;
+
+    public virtual User User { get; set; } = null!;
 }

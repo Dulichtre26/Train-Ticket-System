@@ -1,6 +1,6 @@
-namespace TrainTicket.Business.DTOs
+﻿namespace TrainTicket.Business.DTOs
 {
-    // DTO d�ng d? li?u s? ?? gh?.
+    // DTO dòng dỡ liệu sơ đồ ghế.
     // M?i record t??ng ?ng 1 gh? tr? v? t? sp_XemSoDoGhe.
     public class SeatMapDto
     {

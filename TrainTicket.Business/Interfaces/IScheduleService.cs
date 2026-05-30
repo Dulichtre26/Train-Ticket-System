@@ -3,16 +3,16 @@ using TrainTicket.Business.DTOs;
 
 namespace TrainTicket.Business.Interfaces
 {
-    // Service nghi?p v? tìm chuy?n và l?y s? ?? gh?.
+    // Service nghiep vu tìm chuyen và alay so ghe.
     public interface IScheduleService
     {
-        // G?i SP tìm chuy?n theo ga ?i/ga ??n/ngày ?i.
+        // Gui SP tìm chuyen theo ga gai/ga den/ngày di.
         Task<DataTable> SearchSchedulesAsync(SearchScheduleDto request);
 
-        // G?i SP l?y tr?ng thái gh? c?a m?t chuy?n.
+        // Gui SP lay trang thai ghe cua mot chuyen.
         Task<List<SeatMapDto>> GetSeatMapAsync(int scheduleId);
 
-        // C?p nh?p tr?ng thái chuy?n
+        // Cap nhat trang thai chuyen
         Task<bool> UpdateScheduleStatusAsync(int scheduleId, string status, int? delayMinutes = null);
     }
 }

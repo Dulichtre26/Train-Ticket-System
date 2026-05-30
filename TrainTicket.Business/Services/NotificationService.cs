@@ -13,22 +13,22 @@ namespace TrainTicket.Business.Services
 
         public async Task<List<NotificationDto>> GetUnreadAsync(int userId) =>
             await _db.Notifications
-                .Where(n => n.UserID == userId && !n.IsRead)
+                .Where(n => n.UserId == userId && n.IsRead != true)
                 .OrderByDescending(n => n.CreatedAt)
                 .Take(50)
                 .Select(n => new NotificationDto
                 {
-                    NotiID    = n.NotiID,
+                    NotiId    = n.NotiId,
                     Title     = n.Title,
                     Body      = n.Body,
                     Type      = n.Type,
-                    IsRead    = n.IsRead,
-                    CreatedAt = n.CreatedAt,
-                    RelatedID = n.RelatedID
+                    IsRead    = n.IsRead ?? false,
+                    CreatedAt = n.CreatedAt ?? DateTime.Now,
+                    RelatedId = n.RelatedId
                 }).ToListAsync();
 
         public async Task<int> GetUnreadCountAsync(int userId) =>
-            await _db.Notifications.CountAsync(n => n.UserID == userId && !n.IsRead);
+            await _db.Notifications.CountAsync(n => n.UserId == userId && n.IsRead != true);
 
         public async Task MarkReadAsync(int notiId)
         {
@@ -39,7 +39,7 @@ namespace TrainTicket.Business.Services
         public async Task MarkAllReadAsync(int userId)
         {
             await _db.Notifications
-                .Where(n => n.UserID == userId && !n.IsRead)
+                .Where(n => n.UserId == userId && n.IsRead != true)
                 .ExecuteUpdateAsync(s => s.SetProperty(n => n.IsRead, true));
         }
     }

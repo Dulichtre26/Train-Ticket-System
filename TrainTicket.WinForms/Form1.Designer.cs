@@ -1,4 +1,4 @@
-﻿namespace TrainTicket.WinForms
+namespace TrainTicket.WinForms
 {
     partial class Form1
     {
@@ -37,3 +37,4 @@
         #endregion
     }
 }
+

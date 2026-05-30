@@ -4,7 +4,7 @@ using TrainTicket.Data.DbContexts;
 
 namespace TrainTicket.WinForms.Helpers
 {
-    public class TenantProvider : ITenantProvider, ITenantProviderData
+    public class TenantProvider : ITenantProvider
     {
         public string GetCurrentRegion()
         {

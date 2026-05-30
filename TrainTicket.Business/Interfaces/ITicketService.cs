@@ -1,29 +1,20 @@
+Ôªøusing System;
 using System.Data;
+using System.Threading.Tasks;
 using TrainTicket.Business.DTOs;
 
 namespace TrainTicket.Business.Interfaces
 {
-    // Service nghi?p v? liÍn quan vÚng ??i vÈ: ??t/h?y/x·c nh?n thanh to·n.
     public interface ITicketService
     {
-        // Th?c hi?n ??t vÈ, tr? thÙng tin vÈ v?a t?o.
         Task<BookTicketResultDto?> BookTicketAsync(BookTicketRequestDto request);
-
-        // H?y vÈ theo quy?n v‡ quy t?c nghi?p v? trong SP.
         Task<CancelTicketResultDto> CancelTicketAsync(int ticketId, int userId, string? cancelReason = null);
-
-        // X·c nh?n thanh to·n cho vÈ ?ang Pending.
         Task<bool> ConfirmPaymentAsync(int ticketId, string? transactionId = null);
+        Task<DataTable> GetTicketsAsync(int? userId = null, string? status = null, DateTime? from = null, DateTime? to = null, string? ticketCode = null);
+        Task<bool> CheckInAsync(string ticketCode);
+        Task<decimal> CalculatePriceAsync(int scheduleId, string seatType, string? discountCode);
 
-        // L?y danh s·ch vÈ (?? hi?n th? trÍn form qu?n l˝ vÈ / thanh to·n)
-        Task<DataTable> GetTicketsAsync(int? userId = null, string? status = null,
-                                        DateTime? from = null, DateTime? to = null,
-                                        string? ticketCode = null);
-
-        // Th?c hi?n Check-in cho vÈ
-        Task<bool> CheckInAsync(string ticketCode);              // [M?I]
-
-        // TÌnh gi· vÈ t?p h?p
-        Task<decimal> CalculatePriceAsync(int scheduleId, string seatType, string? discountCode); // [M?I]
+        // ƒê·ªäNH NGHƒ®A CHU·∫®N: ƒê·ªìng b·ªô tr·∫£ v·ªÅ BookTicketResultDto gi·ªëng l·ªõp Service
+        Task<BookTicketResultDto?> GetTicketByIdAsync(int ticketId);
     }
 }

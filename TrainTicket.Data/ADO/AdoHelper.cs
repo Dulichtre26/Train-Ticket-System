@@ -1,10 +1,10 @@
-using System.Data;
+﻿using System.Data;
 using Microsoft.Data.SqlClient;
 
 namespace TrainTicket.Data.ADO
 {
-    // Helper t?p trung cho thao t�c ADO.NET v?i stored procedures.
-    // D�ng ? c�c nghi?p v? c?n t?i ?u/transaction t?i SQL Server.
+    // Helper tap trung cho thao tác ADO.NET voi stored procedures.
+    // Dung cho cac nghiep vu can toi uu/transaction tai SQL Server.
     public class AdoHelper
     {
         private readonly string _connStr;
@@ -12,7 +12,7 @@ namespace TrainTicket.Data.ADO
 
         public AdoHelper(string connectionString) => _connStr = connectionString;
 
-        // G?i SP tr? v? DataTable  dng cho bo co, tm chuy?n, s? ?? gh?
+        // Gui SP trc ve DataTable  dng cho bo co, tm chuyen, so do ghe
         public DataTable ExecuteStoredProcedure(
             string procedureName,
             Dictionary<string, object?>? parameters = null,
@@ -42,7 +42,7 @@ namespace TrainTicket.Data.ADO
             return dt;
         }
 
-        // G?i SP khng tr? d? li?u  dng cho h?y v, c?p nh?t tr?ng thi
+        // Gui SP khong tra ve du lieu  dung cho huy ve, cap nhat trang thai
         public void ExecuteNonQuery(
             string procedureNameOrSql,
             Dictionary<string, object?>? parameters = null,
@@ -59,7 +59,7 @@ namespace TrainTicket.Data.ADO
             cmd.ExecuteNonQuery();
         }
 
-        // L?y gi� tr? ??n
+        // Lay giá tri don
         public T? ExecuteScalar<T>(
             string sql,
             Dictionary<string, object?>? parameters = null)
@@ -73,7 +73,7 @@ namespace TrainTicket.Data.ADO
             return (T)Convert.ChangeType(result, typeof(T));
         }
 
-        // G?i SP tr? v? nhi?u b?ng  dng khi c?n join nhi?u k?t qu?
+        // Gui SP tra ve nhieu bang  dung khi can join nhieu ket qua
         public DataSet ExecuteStoredProcedureDataSet(
             string procedureName,
             Dictionary<string, object?>? parameters = null)
@@ -87,7 +87,7 @@ namespace TrainTicket.Data.ADO
             return ds;
         }
 
-        // G?i SP tr? v? DataTable  dng cho bo co, tm chuy?n, s? ?? gh?
+        // Gui SP tra ve DataTable  dung cho bo co, tim chuyen, so do ghe
         public async Task<DataTable> ExecuteStoredProcedureAsync(
             string procedureName,
             Dictionary<string, object?>? parameters = null,
@@ -102,7 +102,7 @@ namespace TrainTicket.Data.ADO
             return dt;
         }
 
-        // ?? Inline SQL async ? DataTable ????????????????????
+        // ?? Inline SQL async ? DataTable
         public async Task<DataTable> ExecuteQueryAsync(
             string sql,
             Dictionary<string, object?>? parameters = null)
@@ -117,7 +117,7 @@ namespace TrainTicket.Data.ADO
             return dt;
         }
 
-        // L?y gi� tr? ??n
+        // Lay giá tri don
         public async Task<T?> ExecuteScalarAsync<T>(
             string sql,
             Dictionary<string, object?>? parameters = null)
@@ -131,8 +131,8 @@ namespace TrainTicket.Data.ADO
             return (T)Convert.ChangeType(result, typeof(T));
         }
 
-        // DataAdapter kh�ng h? tr? async natively, nh?ng vi?c connect v� execute command ?� ???c await ? OpenAsync v� ExecuteReaderAsync n?u l�m th? c�ng.
-        // ?? ??n gi?n v?i DataSet (nhi?u b?ng), ta c� th? ??c th? c�ng qua t?ng k?t qu?
+        // DataAdapter không hỗ trợ async natively, nhưng việc connect và execute command đã được await ở OpenAsync và ExecuteReaderAsync nếu làm thủ công.
+        // Để đơn giản với DataSet (nhiều bảng), ta có thể được thực hiện thủ công qua từng kết quả
         public async Task<DataSet> ExecuteStoredProcedureDataSetAsync(
             string procedureName,
             Dictionary<string, object?>? parameters = null)
@@ -158,7 +158,7 @@ namespace TrainTicket.Data.ADO
             return ds;
         }
 
-        // G?i SP khng tr? d? li?u  dng cho h?y v, c?p nh?t tr?ng thi
+        // Gui SP khong tra ve du lieu  dung cho huy ve, cap nhat trang thai
         public async Task ExecuteNonQueryAsync(
             string procedureNameOrSql,
             Dictionary<string, object?>? parameters = null,
@@ -175,7 +175,7 @@ namespace TrainTicket.Data.ADO
             await cmd.ExecuteNonQueryAsync();
         }
 
-        // ?? Test k?t n?i DB ??????????????????????????????????
+        //  Test kết nối DB ??????????????????????????????????
         public bool TestConnection()
         {
             try

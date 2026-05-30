@@ -1,40 +1,31 @@
-using System.ComponentModel.DataAnnotations;
-using System.ComponentModel.DataAnnotations.Schema;
+﻿using System;
+using System.Collections.Generic;
 
-namespace TrainTicket.Data.Entities
+namespace TrainTicket.Data.Entities;
+
+public partial class Discount
 {
-    [Table("Discounts")]
-    public class Discount
-    {
-        [Key]
-        public int DiscountID { get; set; }
+    public int DiscountId { get; set; }
 
-        [Required, MaxLength(50)]
-        public string Code { get; set; } = string.Empty;
+    public string Code { get; set; } = null!;
 
-        [MaxLength(255)]
-        public string? Description { get; set; }
+    public string? Description { get; set; }
 
-        [Required, MaxLength(20)]
-        public string DiscountType { get; set; } = string.Empty; // e.g., "Percentage", "Fixed"
+    public string DiscountType { get; set; } = null!;
 
-        [Required]
-        public decimal Amount { get; set; }
+    public decimal Amount { get; set; }
 
-        public decimal MinPrice { get; set; } = 0;
+    public decimal? MinPrice { get; set; }
 
-        public int? MaxUses { get; set; }
+    public int? MaxUses { get; set; }
 
-        public int UsedCount { get; set; } = 0;
+    public int? UsedCount { get; set; }
 
-        [Required]
-        public DateTime ValidFrom { get; set; }
+    public DateTime ValidFrom { get; set; }
 
-        [Required]
-        public DateTime ValidTo { get; set; }
+    public DateTime ValidTo { get; set; }
 
-        public bool IsActive { get; set; } = true;
+    public bool? IsActive { get; set; }
 
-        public DateTime CreatedAt { get; set; } = DateTime.Now;
-    }
+    public DateTime? CreatedAt { get; set; }
 }

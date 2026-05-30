@@ -1,30 +1,29 @@
-using System.ComponentModel.DataAnnotations;
-using System.ComponentModel.DataAnnotations.Schema;
+﻿using System;
+using System.Collections.Generic;
 
-namespace TrainTicket.Data.Entities
+namespace TrainTicket.Data.Entities;
+
+public partial class Station
 {
-    [Table("Stations")]
-    public class Station
-    {
-        [Key]
-        public int StationID { get; set; }
+    public int StationId { get; set; }
 
-        [Required, MaxLength(10)]
-        public string StationCode { get; set; } = string.Empty;
+    public string StationCode { get; set; } = null!;
 
-        [Required, MaxLength(100)]
-        public string StationName { get; set; } = string.Empty;
+    public string StationName { get; set; } = null!;
 
-        [Required, MaxLength(100)]
-        public string City { get; set; } = string.Empty;
+    public string City { get; set; } = null!;
 
-        [MaxLength(200)]
-        public string? Address { get; set; }
+    public string? Address { get; set; }
 
-        public bool IsActive { get; set; } = true;
-        public DateTime CreatedAt { get; set; } = DateTime.Now;
+    public decimal? Latitude { get; set; }
 
-        [MaxLength(20)]
-        public string RegionCode { get; set; } = "HQ";
-    }
+    public decimal? Longitude { get; set; }
+
+    public bool? IsActive { get; set; }
+
+    public DateTime? CreatedAt { get; set; }
+
+    public virtual ICollection<Route> RouteArrivalStationNavigations { get; set; } = new List<Route>();
+
+    public virtual ICollection<Route> RouteDepartureStationNavigations { get; set; } = new List<Route>();
 }

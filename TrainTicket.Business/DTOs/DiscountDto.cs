@@ -2,7 +2,7 @@ namespace TrainTicket.Business.DTOs
 {
     public class DiscountDto
     {
-        public int DiscountID { get; set; }
+        public int DiscountId { get; set; }
         public string Code { get; set; } = string.Empty;
         public string? Description { get; set; }
         public string DiscountType { get; set; } = string.Empty;

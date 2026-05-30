@@ -43,7 +43,6 @@ namespace TrainTicket.Data.DbContexts
                         FullName = "Quản Trị Viên",
                         PhoneNumber = "0123456789",
                         IsActive = true,
-                        RegionCode = "HQ",
                         CreatedAt = DateTime.Now,
                         UpdatedAt = DateTime.Now
                     };
@@ -56,7 +55,6 @@ namespace TrainTicket.Data.DbContexts
                         FullName = "Khách Hàng Mẫu",
                         PhoneNumber = "0987654321",
                         IsActive = true,
-                        RegionCode = "HQ",
                         CreatedAt = DateTime.Now,
                         UpdatedAt = DateTime.Now
                     };
@@ -66,15 +64,44 @@ namespace TrainTicket.Data.DbContexts
 
                     // Gán quyền
                     if (roleAdmin != null)
-                        context.UserRoles.Add(new UserRole { UserID = adminUser.UserID, RoleID = roleAdmin.RoleID });
+                        context.UserRoles.Add(new UserRole { UserId = adminUser.UserId, RoleId = roleAdmin.RoleId });
                     if (roleUser != null)
-                        context.UserRoles.Add(new UserRole { UserID = customerUser.UserID, RoleID = roleUser.RoleID });
+                        context.UserRoles.Add(new UserRole { UserId = customerUser.UserId, RoleId = roleUser.RoleId });
 
                     context.SaveChanges();
                 }
 
                 // Nếu đã có Stations từ SQL file thì không nạp thêm dữ liệu mẫu bằng C# để tránh trùng lặp
                 if (context.Stations.Any()) return;
+
+                // 4. Luôn tạo tài khoản Admin nếu chưa có (để tránh mất tài khoản đăng nhập)
+                if (!context.Users.Any(u => u.Email == "admin@trainticket.vn"))
+                {
+                    var roleAdmin = context.Roles.FirstOrDefault(r => r.RoleName == "Admin");
+                    if (roleAdmin == null)
+                    {
+                        roleAdmin = new Role { RoleName = "Admin", Description = "Administrator" };
+                        context.Roles.Add(roleAdmin);
+                        context.SaveChanges();
+                    }
+
+                    var adminUser = new User
+                    {
+                        Email = "admin@trainticket.vn",
+                        PasswordHash = BCrypt.Net.BCrypt.HashPassword("Admin@123"),
+                        FullName = "Quản Trị Viên",
+                        PhoneNumber = "0123456789",
+                        IsActive = true,
+                        CreatedAt = DateTime.Now,
+                        UpdatedAt = DateTime.Now
+                    };
+
+                    context.Users.Add(adminUser);
+                    context.SaveChanges();
+
+                    context.UserRoles.Add(new UserRole { UserId = adminUser.UserId, RoleId = roleAdmin.RoleId });
+                    context.SaveChanges();
+                }
 
             }
             catch (Exception ex)

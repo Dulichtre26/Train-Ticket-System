@@ -1,66 +1,57 @@
-using System.ComponentModel.DataAnnotations;
-using System.ComponentModel.DataAnnotations.Schema;
+﻿using System;
+using System.Collections.Generic;
 
-namespace TrainTicket.Data.Entities
+namespace TrainTicket.Data.Entities;
+
+public partial class Ticket
 {
-    [Table("Tickets")]
-    public class Ticket
-    {
-        [Key]
-        public int TicketID { get; set; }
+    public int TicketId { get; set; }
 
-        [Required, MaxLength(20)]
-        public string TicketCode { get; set; } = string.Empty;
+    public string TicketCode { get; set; } = null!;
 
-        public int UserID { get; set; }
-        public int ScheduleID { get; set; }
-        public int SeatID { get; set; }
+    public int UserId { get; set; }
 
-        [Required, MaxLength(100)]
-        public string PassengerName { get; set; } = string.Empty;
+    public int ScheduleId { get; set; }
 
-        [Required, MaxLength(20)]
-        public string PassengerID { get; set; } = string.Empty;
+    public int SeatId { get; set; }
 
-        [MaxLength(15)]
-        public string? PassengerPhone { get; set; }
+    public string PassengerName { get; set; } = null!;
 
-        [Required, MaxLength(50)]
-        public string SeatType { get; set; } = string.Empty;
+    public string PassengerId { get; set; } = null!;
 
-        [Column(TypeName = "decimal(12,0)")]
-        public decimal OriginalPrice { get; set; }
+    public string? PassengerPhone { get; set; }
 
-        [Column(TypeName = "decimal(12,0)")]
-        public decimal DiscountAmount { get; set; } = 0;
+    public string SeatType { get; set; } = null!;
 
-        [Column(TypeName = "decimal(12,0)")]
-        public decimal FinalPrice { get; set; }
+    public decimal OriginalPrice { get; set; }
 
-        [MaxLength(50)]
-        public string? DiscountCode { get; set; }
+    public decimal? DiscountAmount { get; set; }
 
-        [MaxLength(20)]
-        public string Status { get; set; } = "Pending";
+    public decimal FinalPrice { get; set; }
 
-        public bool CheckedIn { get; set; } = false;
-        public DateTime? CheckInAt { get; set; }
-        public DateTime BookedAt { get; set; } = DateTime.Now;
-        public DateTime? CancelledAt { get; set; }
+    public string? DiscountCode { get; set; }
 
-        [MaxLength(255)]
-        public string? CancelReason { get; set; }
+    public string? Status { get; set; }
 
-        public DateTime CreatedAt { get; set; } = DateTime.Now;
-        public DateTime UpdatedAt { get; set; } = DateTime.Now;
+    public bool? CheckedIn { get; set; }
 
-        [MaxLength(20)]
-        public string RegionCode { get; set; } = "HQ";
+    public DateTime? CheckInAt { get; set; }
 
-        // Navigation
-        public User User { get; set; } = null!;
-        public Schedule Schedule { get; set; } = null!;
-        public Seat Seat { get; set; } = null!;
-        public Payment? Payment { get; set; }
-    }
+    public DateTime? BookedAt { get; set; }
+
+    public DateTime? CancelledAt { get; set; }
+
+    public string? CancelReason { get; set; }
+
+    public DateTime? CreatedAt { get; set; }
+
+    public DateTime? UpdatedAt { get; set; }
+
+    public virtual ICollection<Payment> Payments { get; set; } = new List<Payment>();
+
+    public virtual Schedule Schedule { get; set; } = null!;
+
+    public virtual Seat Seat { get; set; } = null!;
+
+    public virtual User User { get; set; } = null!;
 }

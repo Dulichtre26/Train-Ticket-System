@@ -1,12 +1,12 @@
-namespace TrainTicket.Business.DTOs
+﻿namespace TrainTicket.Business.DTOs
 {
-    // DTO d�ng cho m�n h�nh ??ng nh?p.
-    // Form g?i Email + Password sang Business Layer qua object n�y.
+    // DTO dùng cho màn hình đăng nhập
+    // Form gửi Email + Password sang Business Layer qua object này.
     public class LoginRequestDto
     {
         public string Email { get; set; } = string.Empty;
         public string Password { get; set; } = string.Empty;
-        public bool RememberMe { get; set; }   // [M?I]
+        public bool RememberMe { get; set; } 
         public string? Region { get; set; }   // HQ / North / Central / South
     }
 }

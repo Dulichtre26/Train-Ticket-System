@@ -1,30 +1,25 @@
-using System.ComponentModel.DataAnnotations;
-using System.ComponentModel.DataAnnotations.Schema;
+﻿using System;
+using System.Collections.Generic;
 
-namespace TrainTicket.Data.Entities
+namespace TrainTicket.Data.Entities;
+
+public partial class Carriage
 {
-    [Table("Carriages")]
-    public class Carriage
-    {
-        [Key]
-        public int CarriageID { get; set; }
+    public int CarriageId { get; set; }
 
-        public int TrainID { get; set; }
+    public int TrainId { get; set; }
 
-        [Required, MaxLength(10)]
-        public string CarriageCode { get; set; } = string.Empty;
+    public string CarriageCode { get; set; } = null!;
 
-        [Required, MaxLength(50)]
-        public string CarriageType { get; set; } = string.Empty;
+    public string CarriageType { get; set; } = null!;
 
-        public int TotalSeats { get; set; }
-        public bool IsActive { get; set; } = true;
+    public int TotalSeats { get; set; }
 
-        [MaxLength(20)]
-        public string RegionCode { get; set; } = "HQ";
+    public int? Floor { get; set; }
 
-        // Navigation
-        public Train Train { get; set; } = null!;
-        public ICollection<Seat> Seats { get; set; } = new List<Seat>();
-    }
+    public bool? IsActive { get; set; }
+
+    public virtual ICollection<Seat> Seats { get; set; } = new List<Seat>();
+
+    public virtual Train Train { get; set; } = null!;
 }

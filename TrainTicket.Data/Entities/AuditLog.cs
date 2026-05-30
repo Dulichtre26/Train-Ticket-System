@@ -1,34 +1,27 @@
-using System.ComponentModel.DataAnnotations;
-using System.ComponentModel.DataAnnotations.Schema;
+﻿using System;
+using System.Collections.Generic;
 
-namespace TrainTicket.Data.Entities
+namespace TrainTicket.Data.Entities;
+
+public partial class AuditLog
 {
-    [Table("AuditLogs")]
-    public class AuditLog
-    {
-        [Key]
-        public int LogID { get; set; }
+    public int LogId { get; set; }
 
-        public int? UserID { get; set; }
+    public int? UserId { get; set; }
 
-        [Required, MaxLength(100)]
-        public string Action { get; set; } = string.Empty;
+    public string Action { get; set; } = null!;
 
-        [MaxLength(100)]
-        public string? TableName { get; set; }
+    public string? TableName { get; set; }
 
-        public int? RecordID { get; set; }
+    public int? RecordId { get; set; }
 
-        public string? OldValues { get; set; }
+    public string? OldValues { get; set; }
 
-        public string? NewValues { get; set; }
+    public string? NewValues { get; set; }
 
-        [MaxLength(45)]
-        public string? IPAddress { get; set; }
+    public string? Ipaddress { get; set; }
 
-        public DateTime CreatedAt { get; set; } = DateTime.Now;
+    public DateTime? CreatedAt { get; set; }
 
-        // Navigation
-        public User? User { get; set; }
-    }
+    public virtual User? User { get; set; }
 }

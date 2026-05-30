@@ -1,26 +1,17 @@
-using System.ComponentModel.DataAnnotations;
-using System.ComponentModel.DataAnnotations.Schema;
+﻿using System;
+using System.Collections.Generic;
 
-namespace TrainTicket.Data.Entities
+namespace TrainTicket.Data.Entities;
+
+public partial class SchedulePrice
 {
-    [Table("SchedulePrices")]
-    public class SchedulePrice
-    {
-        [Key]
-        public int PriceID { get; set; }
+    public int PriceId { get; set; }
 
-        public int ScheduleID { get; set; }
+    public int ScheduleId { get; set; }
 
-        [Required, MaxLength(50)]
-        public string SeatType { get; set; } = string.Empty;
+    public string SeatType { get; set; } = null!;
 
-        [Column(TypeName = "decimal(12,0)")]
-        public decimal Price { get; set; }
+    public decimal Price { get; set; }
 
-        [MaxLength(20)]
-        public string RegionCode { get; set; } = "HQ";
-
-        // Navigation
-        public Schedule Schedule { get; set; } = null!;
-    }
+    public virtual Schedule Schedule { get; set; } = null!;
 }

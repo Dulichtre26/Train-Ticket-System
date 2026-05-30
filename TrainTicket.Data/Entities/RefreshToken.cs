@@ -1,31 +1,23 @@
-using System.ComponentModel.DataAnnotations;
-using System.ComponentModel.DataAnnotations.Schema;
+﻿using System;
+using System.Collections.Generic;
 
-namespace TrainTicket.Data.Entities
+namespace TrainTicket.Data.Entities;
+
+public partial class RefreshToken
 {
-    [Table("RefreshTokens")]
-    public class RefreshToken
-    {
-        [Key]
-        public int TokenID { get; set; }
+    public int TokenId { get; set; }
 
-        [Required]
-        public int UserID { get; set; }
+    public int UserId { get; set; }
 
-        [Required]
-        public string Token { get; set; } = string.Empty;
+    public string Token { get; set; } = null!;
 
-        [Required]
-        public DateTime ExpiresAt { get; set; }
+    public DateTime ExpiresAt { get; set; }
 
-        public bool IsRevoked { get; set; } = false;
+    public bool? IsRevoked { get; set; }
 
-        public DateTime CreatedAt { get; set; } = DateTime.Now;
+    public DateTime? CreatedAt { get; set; }
 
-        [MaxLength(255)]
-        public string? DeviceInfo { get; set; }
+    public string? DeviceInfo { get; set; }
 
-        // Navigation
-        public User? User { get; set; }
-    }
+    public virtual User User { get; set; } = null!;
 }

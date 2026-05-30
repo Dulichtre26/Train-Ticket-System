@@ -1,52 +1,52 @@
-using System.ComponentModel.DataAnnotations;
-using System.ComponentModel.DataAnnotations.Schema;
+﻿using System;
+using System.Collections.Generic;
 
-namespace TrainTicket.Data.Entities
+namespace TrainTicket.Data.Entities;
+
+public partial class User
 {
-    [Table("Users")]
-    public class User
-    {
-        [Key]
-        public int UserID { get; set; }
+    public int UserId { get; set; }
 
-        [Required, MaxLength(100)]
-        public string FullName { get; set; } = string.Empty;
+    public string FullName { get; set; } = null!;
 
-        [Required, MaxLength(100)]
-        public string Email { get; set; } = string.Empty;
+    public string Email { get; set; } = null!;
 
-        [MaxLength(15)]
-        public string? PhoneNumber { get; set; }
+    public string? PhoneNumber { get; set; }
 
-        [Required, MaxLength(256)]
-        public string PasswordHash { get; set; } = string.Empty;
+    public string PasswordHash { get; set; } = null!;
 
-        [MaxLength(20)]
-        public string? IDNumber { get; set; }
+    public string? Idnumber { get; set; }
 
-        public DateOnly? DateOfBirth { get; set; }
+    public DateOnly? DateOfBirth { get; set; }
 
-        [MaxLength(10)]
-        public string? Gender { get; set; }
+    public string? Gender { get; set; }
 
-        public bool IsActive { get; set; } = true;
-        public bool IsDeleted { get; set; } = false;
-        public DateTime CreatedAt { get; set; } = DateTime.Now;
-        public DateTime UpdatedAt { get; set; } = DateTime.Now;
+    public bool? IsActive { get; set; }
 
-        // Authentication fields
-        public int FailedLoginCount { get; set; } = 0;
-        public DateTime? LockoutUntil { get; set; }
-        public DateTime? LastLoginAt { get; set; }
+    public bool? IsDeleted { get; set; }
 
-        [MaxLength(20)]
-        public string RegionCode { get; set; } = "HQ";
+    public DateTime? LastLoginAt { get; set; }
 
-        // Navigation
-        public ICollection<UserRole> UserRoles { get; set; } = new List<UserRole>();
-        public ICollection<Ticket> Tickets { get; set; } = new List<Ticket>();
-        public ICollection<Notification> Notifications { get; set; } = new List<Notification>();
-        public ICollection<RefreshToken> RefreshTokens { get; set; } = new List<RefreshToken>();
-        public ICollection<AuditLog> AuditLogs { get; set; } = new List<AuditLog>();
-    }
+    public int? FailedLoginCount { get; set; }
+
+    public DateTime? LockoutUntil { get; set; }
+
+    public DateTime? CreatedAt { get; set; }
+
+    public DateTime? UpdatedAt { get; set; }
+
+    public int? CreatedBy { get; set; }
+
+    public virtual ICollection<AuditLog> AuditLogs { get; set; } = new List<AuditLog>();
+
+    public virtual ICollection<Notification> Notifications { get; set; } = new List<Notification>();
+
+    public virtual ICollection<RefreshToken> RefreshTokens { get; set; } = new List<RefreshToken>();
+
+    public virtual ICollection<Ticket> Tickets { get; set; } = new List<Ticket>();
+
+    public virtual ICollection<UserRole> UserRoles { get; set; } = new List<UserRole>();
+
+    public virtual ICollection<ChatMessage> SentMessages     { get; set; } = new List<ChatMessage>();
+    public virtual ICollection<ChatMessage> ReceivedMessages { get; set; } = new List<ChatMessage>();
 }

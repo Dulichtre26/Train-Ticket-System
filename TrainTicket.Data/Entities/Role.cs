@@ -1,23 +1,17 @@
-using System.ComponentModel.DataAnnotations;
-using System.ComponentModel.DataAnnotations.Schema;
+﻿using System;
+using System.Collections.Generic;
 
-namespace TrainTicket.Data.Entities
+namespace TrainTicket.Data.Entities;
+
+public partial class Role
 {
-    [Table("Roles")]
-    public class Role
-    {
-        [Key]
-        public int RoleID { get; set; }
+    public int RoleId { get; set; }
 
-        [Required, MaxLength(50)]
-        public string RoleName { get; set; } = string.Empty;
+    public string RoleName { get; set; } = null!;
 
-        [MaxLength(200)]
-        public string? Description { get; set; }
+    public string? Description { get; set; }
 
-        public DateTime CreatedAt { get; set; } = DateTime.Now;
+    public DateTime? CreatedAt { get; set; }
 
-        // Navigation
-        public ICollection<UserRole> UserRoles { get; set; } = new List<UserRole>();
-    }
+    public virtual ICollection<UserRole> UserRoles { get; set; } = new List<UserRole>();
 }

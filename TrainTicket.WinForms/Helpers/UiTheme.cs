@@ -1,16 +1,16 @@
-using System.Text.Json;
+ï»¿using System.Text.Json;
 
 namespace TrainTicket.WinForms.Helpers
 {
-    // Qu?n lý màu giao di?n toàn c?c v?i color palette hài hòa và cân ??i.
-    // D?a trên Material Design 3 v?i primary color xanh d??ng và accent màu cam.
+    // Quáº£n lÃ½ mÃ u giao diá»‡n toÃ n cá»¥c vá»›i color palette hÃ i hÃ²a vÃ  cÃ¢n Ä‘á»‘i.
+    // Dá»±a trÃªn Material Design 3 vá»›i primary color xanh dÆ°Æ¡ng vÃ  accent mÃ u cam.
     public static class UiTheme
     {
         private const string ThemeFileName = "theme.json";
 
         public static bool IsDark { get; private set; }
 
-        // === PRIMARY — Indigo (tin c?y, chuyên nghi?p) ===
+        // === PRIMARY â€” Indigo (tin cáº­y, chuyÃªn nghiá»‡p) ===
         public static Color Primary      => Color.FromArgb(99,  102, 241); // Indigo-500
         public static Color PrimaryLight => Color.FromArgb(165, 180, 252); // Indigo-300
         public static Color PrimaryDark  => Color.FromArgb(67,  56,  202); // Indigo-700
@@ -25,9 +25,9 @@ namespace TrainTicket.WinForms.Helpers
         public static Color Background => IsDark ? Color.FromArgb(15,  23, 42)  : Color.FromArgb(241, 245, 249); // slate-900 / slate-100
         public static Color Surface => IsDark ? Color.FromArgb(30,  41, 59)  : Color.FromArgb(255, 255, 255); // slate-800 / white
         public static Color SurfaceVariant => IsDark ? Color.FromArgb(51,  65, 85)  : Color.FromArgb(248, 250, 252); // slate-700 / slate-50
-        public static Color Sidebar => IsDark ? Color.FromArgb(15,  23, 42)  : Color.FromArgb(30,  41, 59);   // dark always, light dùng slate-800 (n?i b?t)
+        public static Color Sidebar => IsDark ? Color.FromArgb(15,  23, 42)  : Color.FromArgb(30,  41, 59);   // dark always, light dÃ¹ng slate-800 (n?i b?t)
 
-        // === NAV BUTTON COLORS — trên n?n Sidebar t?i ===
+        // === NAV BUTTON COLORS â€” trÃªn n?n Sidebar t?i ===
         public static Color NavButton      => Color.FromArgb(51,  65,  85);  // slate-700
         public static Color NavButtonHover => Color.FromArgb(99, 102, 241);  // Primary
         public static Color NavText        => Color.FromArgb(203, 213, 225); // slate-300
@@ -37,7 +37,7 @@ namespace TrainTicket.WinForms.Helpers
         public static Color TextSecondary => IsDark ? Color.FromArgb(148, 163, 184) : Color.FromArgb(71,  85, 105); // slate-400 / slate-600
         public static Color TextTertiary => Color.FromArgb(100, 116, 139);                                         // slate-500
 
-        // === HEADER GRADIENT START/END (dùng cho form header) ===
+        // === HEADER GRADIENT START/END (dÃ¹ng cho form header) ===
         public static Color HeaderGradientStart => Color.FromArgb(67, 56, 202);  // Indigo-700
         public static Color HeaderGradientEnd   => Color.FromArgb(99, 102, 241); // Indigo-500
 
@@ -50,6 +50,25 @@ namespace TrainTicket.WinForms.Helpers
         // === BORDER & DIVIDER ===
         public static Color Border => IsDark ? Color.FromArgb(55, 55, 55) : Color.FromArgb(224, 224, 224);
         public static Color Divider => IsDark ? Color.FromArgb(45, 45, 45) : Color.FromArgb(238, 238, 238);
+
+                public static void StyleGrid(Guna.UI2.WinForms.Guna2DataGridView grid)
+        {
+            grid.ThemeStyle.HeaderStyle.BackColor = PrimaryDark;
+            grid.ThemeStyle.HeaderStyle.ForeColor = Color.White;
+            grid.ThemeStyle.HeaderStyle.Font = new Font("Segoe UI", 10, FontStyle.Bold);
+            
+            grid.ThemeStyle.RowsStyle.BackColor = Background;
+            grid.ThemeStyle.RowsStyle.ForeColor = TextPrimary;
+            grid.ThemeStyle.RowsStyle.SelectionBackColor = Primary;
+            grid.ThemeStyle.RowsStyle.SelectionForeColor = Color.White;
+
+            grid.ThemeStyle.AlternatingRowsStyle.BackColor = SurfaceVariant;
+            grid.ThemeStyle.AlternatingRowsStyle.ForeColor = TextPrimary;
+            grid.ThemeStyle.AlternatingRowsStyle.SelectionBackColor = Primary;
+            grid.ThemeStyle.AlternatingRowsStyle.SelectionForeColor = Color.White;
+            
+            grid.GridColor = Border;
+        }
 
         public static void Toggle()
         {

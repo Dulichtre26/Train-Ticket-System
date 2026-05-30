@@ -21,11 +21,10 @@ namespace TrainTicket.Business.Services
             {
                 ["@UserID"] = request.UserID,
                 ["@ScheduleID"] = request.ScheduleID,
-                ["@SeatID"] = request.SeatID,
-                ["@PassengerName"] = request.PassengerName,
-                ["@PassengerID"] = request.PassengerID,
-                ["@PassengerPhone"] = (object?)request.PassengerPhone ?? DBNull.Value,
-                ["@SeatType"] = request.SeatType,
+                ["@SeatIDs"] = request.SeatID.ToString(),
+                ["@PassengerNames"] = request.PassengerName,
+                ["@PassengerIDs"] = request.PassengerID,
+                ["@PassengerPhones"] = (object?)request.PassengerPhone ?? DBNull.Value,
                 ["@PaymentMethod"] = request.PaymentMethod,
                 ["@DiscountCode"] = (object?)request.DiscountCode ?? DBNull.Value,
             };
@@ -40,18 +39,18 @@ namespace TrainTicket.Business.Services
                 TicketID = row.Field<int>("TicketID"),
                 TicketCode = row.Field<string>("TicketCode") ?? "",
                 PassengerName = row.Field<string>("PassengerName") ?? "",
-                SeatType = row.Field<string>("SeatType") ?? "",
-                OriginalPrice = row.Field<decimal>("OriginalPrice"),
-                DiscountAmount = row.Field<decimal>("DiscountAmount"),
-                GiaVe = row.Field<decimal>("GiaVe"),
-                TrangThaiVe = row.Field<string>("TrangThaiVe") ?? "",
-                GioDi = row.Field<DateTime>("GioDi"),
-                GioDen = row.Field<DateTime>("GioDen"),
+                GiaVe = row.Field<decimal>("FinalPrice"),
+                OriginalPrice = row.Field<decimal>("FinalPrice"),
+                DiscountAmount = 0,
+                SoGhe = row.Field<string>("SeatNumber") ?? "",
+                MaToa = row.Field<string>("CarriageCode") ?? "",
                 GaDi = row.Field<string>("GaDi") ?? "",
                 GaDen = row.Field<string>("GaDen") ?? "",
-                MaTau = row.Field<string>("MaTau") ?? "",
-                MaToa = row.Field<string>("MaToa") ?? "",
-                SoGhe = row.Field<string>("SoGhe") ?? "",
+                SeatType = "",
+                TrangThaiVe = "Pending",
+                GioDi = DateTime.MinValue,
+                GioDen = DateTime.MinValue,
+                MaTau = "",
             };
         }
 
@@ -136,7 +135,6 @@ namespace TrainTicket.Business.Services
                 ["@DiscountCode"] = (object?)discountCode ?? DBNull.Value
             };
 
-            // Sử dụng ExecuteQueryAsync để lấy giá vé tính toán được từ SQL Function
             var table = await _adoHelper.ExecuteQueryAsync(
                 @"SELECT dbo.fn_TinhGiaVe(
                     (SELECT Price FROM SchedulePrices WHERE ScheduleID=@ScheduleID AND SeatType=@SeatType),
@@ -146,6 +144,35 @@ namespace TrainTicket.Business.Services
                 return 0m;
 
             return Convert.ToDecimal(table.Rows[0]["FinalPrice"]);
+        }
+
+        /// <summary>
+        /// XỬ LÝ TRUY VẤN: Lấy chi tiết vé phục vụ luồng hiển thị mã QR thanh toán
+        /// </summary>
+        public async Task<BookTicketResultDto?> GetTicketByIdAsync(int ticketId)
+        {
+            var p = new Dictionary<string, object?>
+            {
+                ["@TicketID"] = ticketId
+            };
+
+            // Truy vấn trực tiếp từ cơ sở dữ liệu bảng Tickets
+            var table = await _adoHelper.ExecuteQueryAsync(
+                @"SELECT TicketID, TicketCode, FinalPrice 
+                  FROM Tickets 
+                  WHERE TicketID = @TicketID", p);
+
+            if (table.Rows.Count == 0) return null;
+
+            var row = table.Rows[0];
+
+            // Đã xóa thuộc tính 'FinalPrice' không hợp lệ tại đây để tránh lỗi biên dịch
+            return new BookTicketResultDto
+            {
+                TicketID = row.Field<int>("TicketID"),
+                TicketCode = row.Field<string>("TicketCode") ?? "",
+                GiaVe = row.Field<decimal>("FinalPrice")
+            };
         }
     }
 }

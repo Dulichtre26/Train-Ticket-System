@@ -1,12 +1,12 @@
-namespace TrainTicket.WinForms.Helpers
+﻿namespace TrainTicket.WinForms.Helpers
 {
-    // Helper hi?n th? th�ng b�o th?ng nh?t to�n ?ng d?ng.
+    // Helper hiển thị thông báo thống nhất toàn ứng dụng.
     public static class UiNotifier
     {
         private static readonly Queue<(string Message, Color Accent)> _toastQueue = new();
         private static bool _isShowingToast;
 
-        public static void Info(string message, string title = "Th�ng b�o")
+        public static void Info(string message, string title = "Thông báo")
         {
             MessageBox.Show(message, title, MessageBoxButtons.OK, MessageBoxIcon.Information);
         }

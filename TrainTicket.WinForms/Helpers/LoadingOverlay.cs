@@ -1,8 +1,8 @@
-using Guna.UI2.WinForms;
+﻿using Guna.UI2.WinForms;
 
 namespace TrainTicket.WinForms.Helpers
 {
-    // Overlay loading t�i s? d?ng cho c�c form c� t�c v? async.
+    // Overlay loading tái sử dụng cho các form có tác vụ async.
     public class LoadingOverlay
     {
         private readonly Guna2Panel _overlay = new();

@@ -18,31 +18,31 @@ namespace TrainTicket.Business.Services
         public async Task<DiscountDto?> GetDiscountByCodeAsync(string code)
         {
             var discount = await _context.Discounts
-                .FirstOrDefaultAsync(d => d.Code == code && d.IsActive && d.ValidFrom <= DateTime.Now && d.ValidTo >= DateTime.Now);
+                .FirstOrDefaultAsync(d => d.Code == code && d.IsActive == true && d.ValidFrom <= DateTime.Now && d.ValidTo >= DateTime.Now);
 
             if (discount == null) return null;
 
             return new DiscountDto
             {
-                DiscountID = discount.DiscountID,
+                DiscountId = discount.DiscountId,
                 Code = discount.Code,
                 Description = discount.Description,
                 DiscountType = discount.DiscountType,
                 Amount = discount.Amount,
-                MinPrice = discount.MinPrice,
+                MinPrice = discount.MinPrice ?? 0m,
                 MaxUses = discount.MaxUses,
-                UsedCount = discount.UsedCount,
+                UsedCount = discount.UsedCount ?? 0,
                 ValidFrom = discount.ValidFrom,
                 ValidTo = discount.ValidTo,
-                IsActive = discount.IsActive,
-                CreatedAt = discount.CreatedAt
+                IsActive = discount.IsActive ?? false,
+                CreatedAt = discount.CreatedAt ?? DateTime.Now
             };
         }
 
         public async Task<bool> ApplyDiscountAsync(string code)
         {
             var discount = await _context.Discounts.FirstOrDefaultAsync(d => d.Code == code);
-            if (discount == null || !discount.IsActive || discount.ValidTo < DateTime.Now) return false;
+            if (discount == null || discount.IsActive != true || discount.ValidTo < DateTime.Now) return false;
 
             if (discount.MaxUses.HasValue && discount.UsedCount >= discount.MaxUses.Value) return false;
 
@@ -54,23 +54,23 @@ namespace TrainTicket.Business.Services
         public async Task<IEnumerable<DiscountDto>> GetActiveDiscountsAsync()
         {
             var discounts = await _context.Discounts
-                .Where(d => d.IsActive && d.ValidFrom <= DateTime.Now && d.ValidTo >= DateTime.Now)
+                .Where(d => d.IsActive == true && d.ValidFrom <= DateTime.Now && d.ValidTo >= DateTime.Now)
                 .ToListAsync();
 
             return discounts.Select(d => new DiscountDto
             {
-                DiscountID = d.DiscountID,
+                DiscountId = d.DiscountId,
                 Code = d.Code,
                 Description = d.Description,
                 DiscountType = d.DiscountType,
                 Amount = d.Amount,
-                MinPrice = d.MinPrice,
+                MinPrice = d.MinPrice ?? 0m,
                 MaxUses = d.MaxUses,
-                UsedCount = d.UsedCount,
+                UsedCount = d.UsedCount ?? 0,
                 ValidFrom = d.ValidFrom,
                 ValidTo = d.ValidTo,
-                IsActive = d.IsActive,
-                CreatedAt = d.CreatedAt
+                IsActive = d.IsActive ?? false,
+                CreatedAt = d.CreatedAt ?? DateTime.Now
             });
         }
     }

@@ -1,22 +1,22 @@
-using TrainTicket.Business.DTOs;
+﻿using TrainTicket.Business.DTOs;
 using TrainTicket.Data.Helpers;
 
 namespace TrainTicket.WinForms.Helpers
 {
-    // Qu?n l� tr?ng th�i ??ng nh?p v� Phi�n l�m vi?c (Session)
+    // Quản lý trạng thái đăng nhập và Phiên làm việc (Session)
     public static class SessionManager
     {
-        // User ?ang ??ng nh?p.
+        // User đang đăng nhập.
         public static UserSessionDto? CurrentUser { get; private set; }
 
         public static string CurrentRegion { get; set; } = RegionHelper.HQ;
 
-        // Role hi?n t?i
+        // Role hiện tại
         public static string CurrentRole => CurrentUser?.Roles.FirstOrDefault() ?? string.Empty;
 
         public static bool IsLoggedIn => CurrentUser is not null;
 
-        // [M?I] Timeout: session qu� 8h th� coi nh? h?t h?n
+        // [MỚI] Timeout: session quá 8h thì coi như hết hạn
         public static bool IsSessionExpired =>
             CurrentUser != null && (DateTime.Now - CurrentUser.LoginAt).TotalHours > 8;
 

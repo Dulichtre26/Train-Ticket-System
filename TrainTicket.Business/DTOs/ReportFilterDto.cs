@@ -1,7 +1,7 @@
-namespace TrainTicket.Business.DTOs
+Ôªønamespace TrainTicket.Business.DTOs
 {
-    // DTO tham s? l?c b·o c·o doanh thu.
-    // CÛ th? l?c theo n?m, th·ng ho?c tuy?n (t˘y m‡n hÏnh b·o c·o).
+    // DTO tham s·ªë l·ªçc b√°o c√°o doanh thu.
+    // C√≥ th·ªÉ l·ªçc theo nƒÉm, th√°ng ho·∫∑c tuy·∫øn (t√πy m√†n h√¨nh b√°o c√°o).
     public class ReportFilterDto
     {
         public int Year { get; set; } = DateTime.Now.Year;

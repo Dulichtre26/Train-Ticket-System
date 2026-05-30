@@ -1,7 +1,7 @@
-namespace TrainTicket.Business.DTOs
+﻿namespace TrainTicket.Business.DTOs
 {
-    // DTO k?t qu? sau khi ??t v� th�nh c�ng.
-    // D? li?u n�y ???c d�ng ?? hi?n th? x�c nh?n/in v� tr�n UI.
+    // DTO kết quả sau khi đặt vé thành công.
+    // Dữ liệu này dùng để hiển thị xác nhận/in vé trên UI.
     public class BookTicketResultDto
     {
         public int TicketID { get; set; }
@@ -19,10 +19,10 @@ namespace TrainTicket.Business.DTOs
         public string MaTau { get; set; } = string.Empty;
         public string MaToa { get; set; } = string.Empty;
         public string SoGhe { get; set; } = string.Empty;
-        // Th�ng tin ho�n ti?n khi hi?n th? ch�nh s�ch
+        // Thông tin hoàn tiền khi hiển thị chính sách
         public string RefundPolicy => GioDi > DateTime.Now
-            ? $"H?y tr??c {(GioDi - DateTime.Now).TotalHours:F0}h � ho�n {GetRefundPercent():F0}%"
-            : "Kh�ng th? ho�n ti?n";
+            ? $"Hủy trước {(GioDi - DateTime.Now).TotalHours:F0}h — hoàn {GetRefundPercent():F0}%"
+            : "Không thể hoàn tiền";
 
         private double GetRefundPercent()
         {

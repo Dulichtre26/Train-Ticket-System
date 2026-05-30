@@ -1,36 +1,33 @@
-using System.ComponentModel.DataAnnotations;
-using System.ComponentModel.DataAnnotations.Schema;
+﻿using System;
+using System.Collections.Generic;
 
-namespace TrainTicket.Data.Entities
+namespace TrainTicket.Data.Entities;
+
+public partial class Payment
 {
-    [Table("Payments")]
-    public class Payment
-    {
-        [Key]
-        public int PaymentID { get; set; }
+    public int PaymentId { get; set; }
 
-        public int TicketID { get; set; }
+    public int TicketId { get; set; }
 
-        [Column(TypeName = "decimal(12,0)")]
-        public decimal Amount { get; set; }
+    public decimal Amount { get; set; }
 
-        [Required, MaxLength(50)]
-        public string PaymentMethod { get; set; } = string.Empty;
+    public string PaymentMethod { get; set; } = null!;
 
-        [MaxLength(20)]
-        public string Status { get; set; } = "Pending";
+    public string? Status { get; set; }
 
-        [MaxLength(100)]
-        public string? TransactionID { get; set; }
+    public string? TransactionId { get; set; }
 
-        public DateTime? PaidAt { get; set; }
+    public string? GatewayRef { get; set; }
 
-        [MaxLength(200)]
-        public string? Note { get; set; }
+    public DateTime? PaidAt { get; set; }
 
-        public DateTime CreatedAt { get; set; } = DateTime.Now;
+    public DateTime? RefundedAt { get; set; }
 
-        // Navigation
-        public Ticket Ticket { get; set; } = null!;
-    }
+    public decimal? RefundAmount { get; set; }
+
+    public string? Note { get; set; }
+
+    public DateTime? CreatedAt { get; set; }
+
+    public virtual Ticket Ticket { get; set; } = null!;
 }

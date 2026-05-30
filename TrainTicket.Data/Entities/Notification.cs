@@ -1,33 +1,25 @@
-using System.ComponentModel.DataAnnotations;
-using System.ComponentModel.DataAnnotations.Schema;
+﻿using System;
+using System.Collections.Generic;
 
-namespace TrainTicket.Data.Entities
+namespace TrainTicket.Data.Entities;
+
+public partial class Notification
 {
-    [Table("Notifications")]
-    public class Notification
-    {
-        [Key]
-        public int NotiID { get; set; }
+    public int NotiId { get; set; }
 
-        [Required]
-        public int UserID { get; set; }
+    public int UserId { get; set; }
 
-        [Required, MaxLength(255)]
-        public string Title { get; set; } = string.Empty;
+    public string Title { get; set; } = null!;
 
-        [Required]
-        public string Body { get; set; } = string.Empty;
+    public string Body { get; set; } = null!;
 
-        [MaxLength(50)]
-        public string Type { get; set; } = "Info";
+    public string? Type { get; set; }
 
-        public bool IsRead { get; set; } = false;
+    public bool? IsRead { get; set; }
 
-        public int? RelatedID { get; set; }
+    public int? RelatedId { get; set; }
 
-        public DateTime CreatedAt { get; set; } = DateTime.Now;
+    public DateTime? CreatedAt { get; set; }
 
-        // Navigation
-        public User? User { get; set; }
-    }
+    public virtual User User { get; set; } = null!;
 }

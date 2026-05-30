@@ -1,37 +1,29 @@
-using System.ComponentModel.DataAnnotations;
-using System.ComponentModel.DataAnnotations.Schema;
+﻿using System;
+using System.Collections.Generic;
 
-namespace TrainTicket.Data.Entities
+namespace TrainTicket.Data.Entities;
+
+public partial class Route
 {
-    [Table("Routes")]
-    public class Route
-    {
-        [Key]
-        public int RouteID { get; set; }
+    public int RouteId { get; set; }
 
-        [Required, MaxLength(200)]
-        public string RouteName { get; set; } = string.Empty;
+    public string RouteName { get; set; } = null!;
 
-        public int DepartureStation { get; set; }
-        public int ArrivalStation { get; set; }
+    public int DepartureStation { get; set; }
 
-        [Column(TypeName = "decimal(8,2)")]
-        public decimal? Distance { get; set; }
+    public int ArrivalStation { get; set; }
 
-        [MaxLength(50)]
-        public string RouteType { get; set; } = "Th??ng";
+    public decimal? Distance { get; set; }
 
-        public bool IsActive { get; set; } = true;
-        public DateTime CreatedAt { get; set; } = DateTime.Now;
+    public decimal? EstimatedHours { get; set; }
 
-        [MaxLength(20)]
-        public string RegionCode { get; set; } = "HQ";
+    public bool? IsActive { get; set; }
 
-        // Navigation
-        public Station DepartureStationNav { get; set; } = null!;
+    public DateTime? CreatedAt { get; set; }
 
-        public Station ArrivalStationNav { get; set; } = null!;
+    public virtual Station ArrivalStationNavigation { get; set; } = null!;
 
-        public ICollection<Schedule> Schedules { get; set; } = new List<Schedule>();
-    }
+    public virtual Station DepartureStationNavigation { get; set; } = null!;
+
+    public virtual ICollection<Schedule> Schedules { get; set; } = new List<Schedule>();
 }

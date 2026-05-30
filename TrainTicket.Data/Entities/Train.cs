@@ -1,31 +1,29 @@
-using System.ComponentModel.DataAnnotations;
-using System.ComponentModel.DataAnnotations.Schema;
+﻿using System;
+using System.Collections.Generic;
 
-namespace TrainTicket.Data.Entities
+namespace TrainTicket.Data.Entities;
+
+public partial class Train
 {
-    [Table("Trains")]
-    public class Train
-    {
-        [Key]
-        public int TrainID { get; set; }
+    public int TrainId { get; set; }
 
-        [Required, MaxLength(20)]
-        public string TrainCode { get; set; } = string.Empty;
+    public string TrainCode { get; set; } = null!;
 
-        [Required, MaxLength(100)]
-        public string TrainName { get; set; } = string.Empty;
+    public string TrainName { get; set; } = null!;
 
-        [Required, MaxLength(50)]
-        public string TrainType { get; set; } = string.Empty;
+    public string TrainType { get; set; } = null!;
 
-        public bool IsActive { get; set; } = true;
-        public DateTime CreatedAt { get; set; } = DateTime.Now;
+    public int? MaxSpeed { get; set; }
 
-        [MaxLength(20)]
-        public string RegionCode { get; set; } = "HQ";
+    public string? Manufacturer { get; set; }
 
-        // Navigation
-        public ICollection<Carriage> Carriages { get; set; } = new List<Carriage>();
-        public ICollection<Schedule> Schedules { get; set; } = new List<Schedule>();
-    }
+    public int? YearBuilt { get; set; }
+
+    public bool? IsActive { get; set; }
+
+    public DateTime? CreatedAt { get; set; }
+
+    public virtual ICollection<Carriage> Carriages { get; set; } = new List<Carriage>();
+
+    public virtual ICollection<Schedule> Schedules { get; set; } = new List<Schedule>();
 }
